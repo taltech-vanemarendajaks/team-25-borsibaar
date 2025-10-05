@@ -98,7 +98,6 @@ POSTGRES_DB=
 POSTGRES_USER=
 POSTGRES_PASSWORD=
 
-# Backend will reach the DB using the Compose service name "postgres"
 SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/{pane siia POSTGRES_DB nimi}
 SPRING_DATASOURCE_USERNAME=
 SPRING_DATASOURCE_PASSWORD=
@@ -106,27 +105,39 @@ SPRING_DATASOURCE_PASSWORD=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 
-# Generate with: openssl rand -base64 32
-JWT_SECRET=""
+JWT_SECRET="" # openssl rand -base64 32
 ```
 
-### Sample `backend/.env`
+## Sample Spring configuration (application.properties)
 
-```env
-# Spring overrides (optional if already set in root .env)
-SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/{pane siia POSTGRES_DB nimi}
-SPRING_DATASOURCE_USERNAME=
-SPRING_DATASOURCE_PASSWORD=
+`backend/src/main/resources/application.properties`
 
-# OAuth2 Google
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
+```properties
+spring.application.name=Borsibaar
 
-# Security
-JWT_SECRET=""
+spring.datasource.url=${SPRING_DATASOURCE_URL}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+
+spring.security.oauth2.client.registration.google.client-id=${GOOGLE_CLIENT_ID}
+spring.security.oauth2.client.registration.google.client-secret=${GOOGLE_CLIENT_SECRET}
+spring.security.oauth2.client.registration.google.scope=openid,profile,email
+spring.security.oauth2.client.registration.google.redirect-uri={baseUrl}/login/oauth2/code/{registrationId}
+spring.security.oauth2.client.registration.google.client-name=Google
+
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.open-in-view=false
+
+spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.yaml
+spring.liquibase.enabled=true
+spring.sql.init.mode=never
+
+jwt.secret=${JWT_SECRET}
+app.cors.allowed-origins=http://localhost:3000,http://127.0.0.1:3000
+app.frontend.url=http://localhost:3000
+
+server.forward-headers-strategy=framework
 ```
-
-> Nõuanne: kui kasutad Docker Compose’i, veendu et `postgres` on sinu PostgreSQL teenuse nimi `docker-compose.yaml` failis – nii vastab `SPRING_DATASOURCE_URL` õigesse konteinerisse.
 
 ## Key Dependencies
 
