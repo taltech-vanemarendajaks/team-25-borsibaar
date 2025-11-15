@@ -10,7 +10,6 @@ import org.mapstruct.*;
 public interface UserMapper {
 
     @Mapping(target = "role", source = "user.role", qualifiedByName = "roleToName")
-    @Mapping(target = "token", source = "token")
     UserDTO toDto(User user, String token);
 
     @Mapping(target = "role", source = "role", qualifiedByName = "roleToName")
