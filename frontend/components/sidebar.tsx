@@ -1,13 +1,12 @@
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
     SidebarGroup, SidebarGroupContent,
     SidebarGroupLabel,
-    SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
+    SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-import {ChartLine, Coins, Home, Package} from "lucide-react"
+import {ChartLine, Home, Package, ShoppingCart} from "lucide-react"
 
 // Menu items.
 const items = [
@@ -20,7 +19,7 @@ const items = [
     {
         title: "POS",
         url: "/pos",
-        icon: Coins,
+        icon: ShoppingCart,
     },
     {
         title: "Inventory",
