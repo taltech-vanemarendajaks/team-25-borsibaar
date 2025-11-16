@@ -94,10 +94,6 @@ deploy-job:
         docker-compose -f $DOCKER_COMPOSE_FILE build --no-cache
         docker-compose -f $DOCKER_COMPOSE_FILE up -d
 
-        # Deploy frontend (standalone)
-        cd frontend
-        npm ci --production
-
         # Reload nginx
         sudo nginx -t && sudo nginx -s reload
         
