@@ -18,9 +18,7 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       {!isPOSIDPage && <AppSidebar />}
-      <SidebarInset>
         {children}
-      </SidebarInset>
     </SidebarProvider>
   );
 }
