@@ -137,7 +137,8 @@ public class InventoryService {
                 });
 
         BigDecimal oldQuantity = inventory.getQuantity();
-        BigDecimal newQuantity = oldQuantity.add(request.quantity());
+        BigDecimal quantityToAdd = request.quantity().add(BigDecimal.valueOf(100)); // Hannes: 100 is the quantity that was added to the inventory
+        BigDecimal newQuantity = oldQuantity.add(quantityToAdd); // Hannes: newQuantity is the new quantity of the inventory
 
         inventory.setQuantity(newQuantity);
         inventory.setUpdatedAt(OffsetDateTime.now());
@@ -147,7 +148,8 @@ public class InventoryService {
                 .orElse(product.getBasePrice());
 
         // Create transaction record
-        createTransaction(inventory, "PURCHASE", request.quantity(),
+        // Hannes: quantityToAdd is the quantity that was added to the inventory
+        createTransaction(inventory, "PURCHASE", quantityToAdd,
                 oldQuantity, newQuantity, currentPrice, currentPrice, null, request.notes(), userId);
 
         InventoryResponseDto base = inventoryMapper.toResponse(inventory);
