@@ -204,7 +204,7 @@ export default function Dashboard() {
             </div>
           )}
           <h1 className="text-3xl font-bold text-card-foreground mb-4">
-            Welcome, {me.name || me.email}!
+            Tere, {me.name || me.email}! 
           </h1>
           <div className="space-y-2 text-muted-foreground mb-6">
             <p>
