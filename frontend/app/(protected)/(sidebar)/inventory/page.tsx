@@ -719,7 +719,7 @@ export default function Inventory() {
                     maxPrice: e.target.value,
                   })
                 }
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${Number(productForm.maxPrice) < 0
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${Number(productForm.maxPrice) < 0 || Number(productForm.maxPrice) < Number(productForm.minPrice)
                   ? "border-red-600 text-red-600"
                   : "border-gray-700"
                   }`}
