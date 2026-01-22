@@ -787,7 +787,11 @@ export default function Inventory() {
                 !productForm.categoryId ||
                 !productForm.currentPrice ||
                 !productForm.minPrice ||
-                !productForm.maxPrice
+                !productForm.maxPrice ||
+                Number(productForm.currentPrice) < 0 ||
+                Number(productForm.minPrice) < 0 ||
+                Number(productForm.maxPrice) < 0 ||
+                Number(productForm.maxPrice) < Number(productForm.minPrice)
               }
               className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium disabled:bg-gray-700 disabled:cursor-not-allowed"
             >
