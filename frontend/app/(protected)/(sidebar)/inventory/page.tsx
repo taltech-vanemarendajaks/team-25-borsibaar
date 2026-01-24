@@ -45,6 +45,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -673,10 +674,12 @@ export default function Inventory() {
                     currentPrice: e.target.value,
                   })
                 }
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${Number(productForm.currentPrice) < 0
-                  ? "border-red-600 text-red-600"
-                  : "border-gray-700"
-                  }`}
+                className={cn(
+                  "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                  Number(productForm.currentPrice) < 0
+                    ? "border-red-600 text-red-600"
+                    : "border-gray-700"
+                )}
                 placeholder="0.00"
                 required
               />
@@ -696,10 +699,12 @@ export default function Inventory() {
                     minPrice: e.target.value,
                   })
                 }
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${Number(productForm.minPrice) < 0
-                  ? "border-red-600 text-red-600"
-                  : "border-gray-700"
-                  }`}
+                className={cn(
+                  "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                  Number(productForm.minPrice) < 0
+                    ? "border-red-600 text-red-600"
+                    : "border-gray-700"
+                )}
                 placeholder="0.00"
                 required
               />
@@ -719,10 +724,12 @@ export default function Inventory() {
                     maxPrice: e.target.value,
                   })
                 }
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${Number(productForm.maxPrice) < 0 || Number(productForm.maxPrice) < Number(productForm.minPrice)
-                  ? "border-red-600 text-red-600"
-                  : "border-gray-700"
-                  }`}
+                className={cn(
+                  "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                  Number(productForm.maxPrice) < 0 || Number(productForm.maxPrice) < Number(productForm.minPrice)
+                    ? "border-red-600 text-red-600"
+                    : "border-gray-700"
+                )}
                 placeholder="0.00"
                 required
               />
