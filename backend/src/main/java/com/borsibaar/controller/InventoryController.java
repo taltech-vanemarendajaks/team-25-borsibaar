@@ -63,6 +63,22 @@ public class InventoryController {
         return inventoryService.adjustStock(request, user.getId(), user.getOrganizationId());
     }
 
+    @PutMapping("/product/{productId}/price")
+    public InventoryResponseDto updatePrice(
+        @PathVariable Long productId,
+        @RequestBody @Valid UpdatePriceRequestDto request
+    ) {
+        User user = SecurityUtils.getCurrentUser();
+        return inventoryService.updatePrice(
+            productId, 
+            request.newPrice(), 
+            request.notes(),
+            user.getId(), 
+            user.getOrganizationId()
+        );
+    }
+
+
     @GetMapping("/product/{productId}/history")
     public List<InventoryTransactionResponseDto> getTransactionHistory(@PathVariable Long productId) {
         User user = SecurityUtils.getCurrentUser();
