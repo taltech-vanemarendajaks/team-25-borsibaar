@@ -64,7 +64,7 @@ As required by the homework, a conflict situation occurred when **multiple contr
 
 ### Conflict Resolution
 
-- slvkmldfkmvlkjndfv
+- slvkmldfsdfdsfgv
 
 ---
 
