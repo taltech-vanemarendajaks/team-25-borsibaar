@@ -78,6 +78,8 @@ public class SecurityConfig {
                         // TODO: these should not be fully public
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/inventory/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
                         // All other API requests require authentication
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2

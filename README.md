@@ -49,6 +49,28 @@ cd frontend && npm run lint
 docker compose up
 ```
 
+### API Reference
+
+Börsibaar’s frontend interacts with the backend via a typed API client generated from the OpenAPI specification. This ensures that frontend code always stays in sync with the backend DTOs and endpoints.
+
+#### OpenAPI Specification
+
+The OpenAPI spec describes all available endpoints, request/response DTOs, and schemas. It can be accessed locally at: http://localhost:8080/v3/api-docs
+(**NB!** The backend has to be running locally to access it)
+
+#### TypeScript API Client
+
+TypeScript types and API clients are automatically generated using `openapi-typescript-codegen`. Generated types replace manually written DTOs for better type safety and consistency.
+
+Location of generated files:
+```frontend/src/api```
+
+How to regenerate types:
+```
+cd frontend
+npm run gen:api
+```
+
 ## Key Backend Architecture
 
 The Spring Boot backend follows a layered architecture:
@@ -190,8 +212,3 @@ server.forward-headers-strategy=framework
   - There is no centralized helper or hook to distinguish “not logged in” from domain errors; each page handles fetch failures differently, leading to inconsistent UX.
   - The user is not always redirected to the login page if they access a protected page without an active auth state; this should be enforced centrally (e.g. middleware + shared fetch helpers).
   - Error messages are mostly inline; using toasts/snackbars or a common error banner component would improve UX and consistency.
-
-- **Typing & shared contracts between frontend and backend**
-  _Modules: `frontend/app/**`, `frontend/utils/**`, backend DTO packages_
-  - TypeScript types are currently hand‑written and can drift out of sync with backend DTOs; there is no code generation or shared contract layer.
-  - Introducing generated types from OpenAPI / SpringDoc, or a shared package for DTO interfaces, would reduce duplication and runtime bugs.
