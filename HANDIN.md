@@ -60,11 +60,11 @@ As required by the homework, a conflict situation occurred when **multiple contr
 
 ### Conflict Description
 
-- ...
+- #TODO Create and resolve a conflict here
 
 ### Conflict Resolution
 
-- ...
+- #TODO Create and resolve a conflict here
 
 ---
 
