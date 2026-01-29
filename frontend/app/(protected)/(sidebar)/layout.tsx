@@ -2,10 +2,7 @@
 
 import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import {
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/sidebar";
 
 // Protected layout wraps pages that require auth.
@@ -18,10 +15,10 @@ export default function ProtectedLayout({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       {!isPOSIDPage && <AppSidebar />}
-        <main className="w-full">
-            {!isPOSIDPage && <SidebarTrigger className="ml-4 mt-4" />}
-            {children}
-        </main>
+      <main className="w-full">
+        {!isPOSIDPage && <SidebarTrigger className="mt-4 ml-4" />}
+        {children}
+      </main>
     </SidebarProvider>
   );
 }

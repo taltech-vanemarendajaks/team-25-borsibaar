@@ -16,8 +16,7 @@ export async function GET(request: NextRequest) {
       return new NextResponse(text, {
         status: response.status,
         headers: {
-          "Content-Type":
-            response.headers.get("content-type") || "application/json",
+          "Content-Type": response.headers.get("content-type") || "application/json",
         },
       });
     }
@@ -32,9 +31,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Proxy error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch organizations" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch organizations" }, { status: 500 });
   }
 }

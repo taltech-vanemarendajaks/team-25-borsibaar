@@ -2,33 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { backendUrl } from "@/utils/constants";
 
 export async function GET(
-    request: NextRequest,
-    { params }: { params: Promise<{ productId: string }> }
+  request: NextRequest,
+  { params }: { params: Promise<{ productId: string }> },
 ) {
-    try {
-        const response = await fetch(
-            `${backendUrl}/api/inventory/product/${(await params).productId}/history`,
-            {
-                method: "GET",
-                headers: {
-                    Cookie: request.headers.get("cookie") || "",
-                },
-                credentials: "include",
-            }
-        );
+  try {
+    const response = await fetch(
+      `${backendUrl}/api/inventory/product/${(await params).productId}/history`,
+      {
+        method: "GET",
+        headers: {
+          Cookie: request.headers.get("cookie") || "",
+        },
+        credentials: "include",
+      },
+    );
 
-        if (!response.ok) {
-            const text = await response.text();
-            return new NextResponse(text, { status: response.status });
-        }
-
-        const data = await response.json();
-        return NextResponse.json(data, { status: response.status });
-    } catch (error) {
-        console.error("Proxy error:", error);
-        return NextResponse.json(
-            { error: "Failed to fetch transaction history" },
-            { status: 500 }
-        );
+    if (!response.ok) {
+      const text = await response.text();
+      return new NextResponse(text, { status: response.status });
     }
+
+    const data = await response.json();
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error("Proxy error:", error);
+    return NextResponse.json({ error: "Failed to fetch transaction history" }, { status: 500 });
+  }
 }
