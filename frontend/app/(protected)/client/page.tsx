@@ -234,10 +234,12 @@ export default function ClientProductsByCategory() {
         <section className="rounded-2xl border border-[#2a2640] bg-[#1b1830] p-4 flex flex-col gap-4">
           <header className="flex flex-col gap-2 text-center justify-between pb-4">
             <div className="max-h-[130px] w-full flex justify-center">
-              <img
+              <Image
                 src="/tudengibaarlogo.png"
                 alt="Tudengibaar"
                 className="h-full object-contain"
+                width={700}
+                height={400}
               /></div>
           </header>
           <div className="mb-3 flex items-center justify-between">
