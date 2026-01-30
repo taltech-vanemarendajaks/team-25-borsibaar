@@ -106,6 +106,7 @@ export default function Inventory() {
 
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [selectedProductForPrice, setSelectedProductForPrice] = useState<InventoryItem | null>(null);
+  const [priceError, setPriceError] = useState<string | null>(null);
   const [priceForm, setPriceForm] = useState({
     newPrice: "",
     notes: "",
@@ -121,6 +122,7 @@ export default function Inventory() {
       setLoading(true);
       const response = await fetch("/api/backend/inventory", {
         cache: "no-store",
+        credentials: "include",
       });
 
       if (!response.ok) throw new Error("Failed to fetch inventory");
@@ -323,6 +325,7 @@ export default function Inventory() {
   };
   const openPriceModal = (item: InventoryItem) => {
     setSelectedProductForPrice(item);
+    setPriceError(null);
     setPriceForm({
       newPrice: String(item.unitPrice || item.basePrice || ""),
       notes: "",
@@ -335,15 +338,17 @@ export default function Inventory() {
 
     const newPrice = parseFloat(priceForm.newPrice);
     if (isNaN(newPrice) || newPrice <= 0) {
-      setError("Please enter a valid price");
+      setPriceError("Please enter a valid price");
       return;
     }
 
     try {
+      setPriceError(null);
       const response = await fetch(
         `/api/backend/inventory/product/${selectedProductForPrice.productId}/price`,
         {
           method: "PUT",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             newPrice: newPrice,
@@ -352,18 +357,35 @@ export default function Inventory() {
         }
       );
 
+      const errorText = await response.text();
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to update price");
+        let errorMessage = "Failed to update price";
+        try {
+          const errorData = errorText ? JSON.parse(errorText) : {};
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          if (errorText) errorMessage = errorText;
+        }
+        setPriceError(errorMessage);
+        return;
       }
 
+      setError(null);
+      setPriceError(null);
+      setInventory((prev) =>
+        prev.map((item) =>
+          item.productId === selectedProductForPrice.productId
+            ? { ...item, unitPrice: newPrice }
+            : item
+        )
+      );
+      await fetchInventory();
       setShowPriceModal(false);
       setSelectedProductForPrice(null);
       setPriceForm({ newPrice: "", notes: "" });
-      fetchInventory(); // Uuenda nimekirja
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to update price";
-      setError(errorMessage);
+      setPriceError(errorMessage);
     }
   };
 
@@ -1269,7 +1291,13 @@ export default function Inventory() {
       </Dialog>
 
       {/* Update Price Dialog */}
-      <Dialog open={showPriceModal} onOpenChange={setShowPriceModal}>
+      <Dialog
+        open={showPriceModal}
+        onOpenChange={(open) => {
+          setShowPriceModal(open);
+          if (!open) setPriceError(null);
+        }}
+      >
         <DialogContent className="bg-gray-900 border-gray-700">
           <DialogHeader>
             <DialogTitle className="text-white">Update Price</DialogTitle>
@@ -1304,12 +1332,32 @@ export default function Inventory() {
                 className="bg-gray-800 text-white"
               />
               {selectedProductForPrice && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Min: {selectedProductForPrice.minPrice || "N/A"}€ | 
-                  Max: {selectedProductForPrice.maxPrice || "N/A"}€
-                </p>
+                <div className="mt-2 p-2 rounded bg-gray-800/80 border border-gray-700">
+                  <p className="text-sm font-medium text-gray-300 mb-1">Price limits</p>
+                  <p className="text-sm text-gray-400">
+                    Min: {selectedProductForPrice.minPrice != null && selectedProductForPrice.minPrice !== ""
+                      ? Number(selectedProductForPrice.minPrice).toFixed(2)
+                      : "N/A"}€
+                    {" · "}
+                    Max: {selectedProductForPrice.maxPrice != null && selectedProductForPrice.maxPrice !== ""
+                      ? Number(selectedProductForPrice.maxPrice).toFixed(2)
+                      : "N/A"}€
+                  </p>
+                  {(selectedProductForPrice.minPrice == null || selectedProductForPrice.minPrice === "") &&
+                   (selectedProductForPrice.maxPrice == null || selectedProductForPrice.maxPrice === "") && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      No min/max set – any positive price is allowed.
+                    </p>
+                  )}
+                </div>
               )}
             </div>
+            {priceError && (
+              <div className="p-3 rounded-lg bg-red-950/80 border border-red-800 text-red-50 text-sm flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{priceError}</span>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">
                 Notes (optional)
