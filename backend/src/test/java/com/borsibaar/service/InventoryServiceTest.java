@@ -168,6 +168,176 @@ class InventoryServiceTest {
         assertEquals("sale-1", txCap.getValue().getReferenceId());
     }
 
+    /**
+     * Testib Update Price (hinna käsitsi muutmine) õnnestumist.
+     * <p>
+     * <b>Testitav:</b> Kui toode ja inventuur on olemas ning uus hind on min/max piirides,
+     * uuendatakse inventuuri praegune hind, salvestatakse ja luuakse ADJUSTMENT transaktsioon.
+     * <p>
+     * <b>Mock andmed:</b>
+     * <ul>
+     *   <li>Product: id=5, org=1, Cola, basePrice=2.00, minPrice=1.00, maxPrice=5.00</li>
+     *   <li>Inventory: id=10, productId=5, quantity=10, adjustedPrice=2.00 (praegune hind)</li>
+     *   <li>Uus hind: 3.50 (min ja max vahel), märkused: "Manual"</li>
+     * </ul>
+     * <b>Kontrollitakse:</b> Tagastatakse DTO uue hinnaga; inventuur save kutsutakse;
+     * transaktsioonil type=ADJUSTMENT, priceBefore=2.00, priceAfter=3.50.
+     */
+    @Test
+    void updatePrice_Success_UpdatesPriceAndCreatesTransaction() {
+        System.out.println("""
+            -------- InventoryServiceTest: updatePrice_Success --------
+            Testitav: Hinna käsitsi muutmine (Update Price) – uus hind min/max piirides.
+            Mock andmed:
+              Product: id=5, orgId=1, name=Cola, basePrice=2.00, minPrice=1.00, maxPrice=5.00
+              Inventory: id=10, productId=5, quantity=10, adjustedPrice=2.00 (praegune hind)
+              Sisend: newPrice=3.50, notes=Manual, userId=..., orgId=1
+            Kontrollitakse: DTO.unitPrice=3.50; inventuur save; ADJUSTMENT tx priceBefore=2.00, priceAfter=3.50
+            ----------------------------------------------------------""");
+
+        // --- Mock andmed: toode ---
+        Long orgId = 1L;
+        Long productId = 5L;
+        Product product = new Product();
+        product.setId(productId);
+        product.setOrganizationId(orgId);
+        product.setActive(true);
+        product.setName("Cola");
+        product.setDescription("Drink");
+        product.setBasePrice(new BigDecimal("2.00"));
+        product.setMinPrice(new BigDecimal("1.00"));
+        product.setMaxPrice(new BigDecimal("5.00"));
+
+        // --- Mock andmed: inventuur (praegune hind 2.00) ---
+        Inventory inv = new Inventory();
+        inv.setId(10L);
+        inv.setOrganizationId(orgId);
+        inv.setProduct(product);
+        inv.setProductId(productId);
+        inv.setQuantity(new BigDecimal("10"));
+        inv.setAdjustedPrice(new BigDecimal("2.00"));
+        inv.setUpdatedAt(OffsetDateTime.now());
+
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(inventoryRepository.findByOrganizationIdAndProductId(orgId, productId)).thenReturn(Optional.of(inv));
+        when(inventoryRepository.save(any(Inventory.class))).thenAnswer(a -> a.getArgument(0));
+        when(inventoryMapper.toResponse(any())).thenAnswer(a -> {
+            Inventory i = a.getArgument(0);
+            return new InventoryResponseDto(i.getId(), i.getOrganizationId(), i.getProductId(), "Cola",
+                i.getQuantity(), i.getAdjustedPrice(), "Drink", product.getBasePrice(),
+                product.getMinPrice(), product.getMaxPrice(), i.getUpdatedAt().toString());
+        });
+
+        // --- Käivitus: uus hind 3.50, märkused "Manual" ---
+        BigDecimal newPrice = new BigDecimal("3.50");
+        InventoryResponseDto dto = inventoryService.updatePrice(productId, newPrice, "Manual", userId, orgId);
+
+        // --- Kontrollid: DTO sisaldab uut hinda ja nime ---
+        assertEquals(newPrice, dto.unitPrice());
+        assertEquals("Cola", dto.productName());
+        verify(inventoryRepository).save(any(Inventory.class));
+        // --- Kontrollid: luuakse ADJUSTMENT transaktsioon õigete hindadega ---
+        ArgumentCaptor<InventoryTransaction> txCap = ArgumentCaptor.forClass(InventoryTransaction.class);
+        verify(inventoryTransactionRepository).save(txCap.capture());
+        assertEquals("ADJUSTMENT", txCap.getValue().getTransactionType());
+        assertEquals(new BigDecimal("2.00"), txCap.getValue().getPriceBefore());
+        assertEquals(newPrice, txCap.getValue().getPriceAfter());
+
+        System.out.println("updatePrice_Success: KÕIK KONTROLLID LÄBITUD.");
+    }
+
+    /**
+     * Testib Update Price – uus hind alla miinimumi: viskab BAD_REQUEST.
+     * Mock: toode minPrice=2.00, uus hind 1.00. Kontrollitakse: status BAD_REQUEST, sõnum sisaldab "below minimum".
+     */
+    @Test
+    void updatePrice_BelowMin_ThrowsBadRequest() {
+        System.out.println("""
+            -------- InventoryServiceTest: updatePrice_BelowMin_ThrowsBadRequest --------
+            Testitav: Uus hind alla minPrice -> BAD_REQUEST.
+            Mock: Product minPrice=2.00, Inventory adjustedPrice=2.00. Sisend: newPrice=1.00.
+            Kontrollitakse: ResponseStatusException BAD_REQUEST, sõnum "below minimum price"
+            ------------------------------------------------------------------------------""");
+
+        Long orgId = 1L;
+        Long productId = 5L;
+        Product product = new Product();
+        product.setId(productId);
+        product.setOrganizationId(orgId);
+        product.setActive(true);
+        product.setBasePrice(new BigDecimal("2.00"));
+        product.setMinPrice(new BigDecimal("2.00"));
+        product.setMaxPrice(new BigDecimal("5.00"));
+
+        Inventory inv = new Inventory();
+        inv.setId(9L);
+        inv.setOrganizationId(orgId);
+        inv.setProduct(product);
+        inv.setProductId(productId);
+        inv.setQuantity(BigDecimal.ONE);
+        inv.setAdjustedPrice(new BigDecimal("2.00"));
+        inv.setUpdatedAt(OffsetDateTime.now());
+
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(inventoryRepository.findByOrganizationIdAndProductId(orgId, productId)).thenReturn(Optional.of(inv));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+            inventoryService.updatePrice(productId, new BigDecimal("1.00"), null, userId, orgId));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertNotNull(ex.getReason());
+        assertTrue(ex.getReason().contains("below minimum price"));
+
+        verify(inventoryRepository, never()).save(any(Inventory.class));
+        verify(inventoryTransactionRepository, never()).save(any(InventoryTransaction.class));
+        System.out.println("updatePrice_BelowMin_ThrowsBadRequest: KÕIK KONTROLLID LÄBITUD.");
+    }
+
+    /**
+     * Testib Update Price – uus hind üle maksimumi: viskab BAD_REQUEST.
+     * Mock: toode maxPrice=3.00, uus hind 5.00. Kontrollitakse: status BAD_REQUEST, sõnum sisaldab "above maximum".
+     */
+    @Test
+    void updatePrice_AboveMax_ThrowsBadRequest() {
+        System.out.println("""
+            -------- InventoryServiceTest: updatePrice_AboveMax_ThrowsBadRequest --------
+            Testitav: Uus hind üle maxPrice -> BAD_REQUEST.
+            Mock: Product maxPrice=3.00, Inventory adjustedPrice=2.00. Sisend: newPrice=5.00.
+            Kontrollitakse: ResponseStatusException BAD_REQUEST, sõnum "above maximum price"
+            ------------------------------------------------------------------------------""");
+
+        Long orgId = 1L;
+        Long productId = 5L;
+        Product product = new Product();
+        product.setId(productId);
+        product.setOrganizationId(orgId);
+        product.setActive(true);
+        product.setBasePrice(new BigDecimal("2.00"));
+        product.setMinPrice(new BigDecimal("1.00"));
+        product.setMaxPrice(new BigDecimal("3.00"));
+
+        Inventory inv = new Inventory();
+        inv.setId(9L);
+        inv.setOrganizationId(orgId);
+        inv.setProduct(product);
+        inv.setProductId(productId);
+        inv.setQuantity(BigDecimal.ONE);
+        inv.setAdjustedPrice(new BigDecimal("2.00"));
+        inv.setUpdatedAt(OffsetDateTime.now());
+
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(inventoryRepository.findByOrganizationIdAndProductId(orgId, productId)).thenReturn(Optional.of(inv));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+            inventoryService.updatePrice(productId, new BigDecimal("5.00"), null, userId, orgId));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertNotNull(ex.getReason());
+        assertTrue(ex.getReason().contains("above maximum price"));
+
+        verify(inventoryRepository, never()).save(any(Inventory.class));
+        verify(inventoryTransactionRepository, never()).save(any(InventoryTransaction.class));
+        System.out.println("updatePrice_AboveMax_ThrowsBadRequest: KÕIK KONTROLLID LÄBITUD.");
+    }
+
     @Test
     void getTransactionHistory_MapsUserInfo() {
         Inventory inv = new Inventory(); inv.setId(100L); inv.setOrganizationId(1L); inv.setProductId(10L);
