@@ -25,8 +25,20 @@ export async function PUT(
 
     if (!response.ok) {
       const errorText = await response.text();
+      let message = "Failed to update price";
+      try {
+        const parsed = errorText ? JSON.parse(errorText) : {};
+        message =
+          typeof parsed.detail === "string"
+            ? parsed.detail
+            : typeof parsed.error === "string"
+              ? parsed.error
+              : errorText || message;
+      } catch {
+        if (errorText && !errorText.startsWith("{")) message = errorText;
+      }
       return NextResponse.json(
-        { error: errorText || "Failed to update price" },
+        { error: message },
         { status: response.status }
       );
     }

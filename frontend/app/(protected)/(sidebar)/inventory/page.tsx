@@ -21,6 +21,8 @@ interface InventoryTransactionResponseDto {
   quantityChange: number;
   quantityBefore: number;
   quantityAfter: number;
+  priceBefore?: number;
+  priceAfter?: number;
   referenceId?: string;
   notes?: string;
   createdBy: string;
@@ -361,10 +363,34 @@ export default function Inventory() {
       if (!response.ok) {
         let errorMessage = "Failed to update price";
         try {
-          const errorData = errorText ? JSON.parse(errorText) : {};
-          errorMessage = errorData.error || errorMessage;
+          let data: { detail?: string; error?: string; message?: string } =
+            {};
+          if (errorText) {
+            try {
+              data = JSON.parse(errorText);
+            } catch {
+              if (!errorText.startsWith("{")) errorMessage = errorText;
+            }
+          }
+          const raw = data.detail ?? data.error ?? data.message ?? "";
+          if (typeof raw === "string" && raw.length > 0) {
+            errorMessage = raw;
+            if (errorMessage.startsWith("{")) {
+              try {
+                const inner = JSON.parse(errorMessage);
+                errorMessage =
+                  inner.detail ?? inner.error ?? inner.message ?? errorMessage;
+              } catch {
+                /* keep raw */
+              }
+            }
+            errorMessage = errorMessage.replace(
+              /(\d+\.\d{2})\d*/g,
+              (_, n) => parseFloat(n).toFixed(2)
+            );
+          }
         } catch {
-          if (errorText) errorMessage = errorText;
+          if (errorText && !errorText.startsWith("{")) errorMessage = errorText;
         }
         setPriceError(errorMessage);
         return;
@@ -625,7 +651,7 @@ export default function Inventory() {
                         </td>
                         <td className="py-3 px-4 text-center">
                           <span className="text-lg font-semibold text-gray-300">
-                            {parseFloat(String(item.basePrice)).toFixed(2)}€
+                            {parseFloat(String(item.unitPrice ?? item.basePrice)).toFixed(2)}€
                           </span>
                         </td>
                         <td className="py-3 px-4 text-center">
@@ -1249,18 +1275,34 @@ export default function Inventory() {
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-400">Before:</span>
+                        <span className="text-gray-400">Qty Before:</span>
                         <span className="ml-1 font-semibold text-gray-300">
                           {Number(transaction.quantityBefore).toFixed(2)}
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-400">After:</span>
+                        <span className="text-gray-400">Qty After:</span>
                         <span className="ml-1 font-semibold text-gray-300">
                           {Number(transaction.quantityAfter).toFixed(2)}
                         </span>
                       </div>
                     </div>
+                    {(transaction.priceBefore != null || transaction.priceAfter != null) && (
+                      <div className="grid grid-cols-2 gap-2 text-sm mt-2 pt-2 border-t border-gray-700">
+                        <div>
+                          <span className="text-gray-400">Price before:</span>
+                          <span className="ml-1 font-semibold text-gray-300">
+                            {Number(transaction.priceBefore ?? 0).toFixed(2)}€
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Price after:</span>
+                          <span className="ml-1 font-semibold text-gray-300">
+                            {Number(transaction.priceAfter ?? 0).toFixed(2)}€
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     {transaction.notes && (
                       <p className="text-sm text-gray-300 mt-2">
                         {transaction.notes}
