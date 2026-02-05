@@ -45,6 +45,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,47 @@ export default function Inventory() {
     initialQuantity: "",
     notes: "",
   });
+
+    function getErrorMessage(err: unknown, fallback = "Something went wrong") {
+      if (err instanceof Error) return err.message;
+      if (typeof err === "string") return err;
+      return fallback;
+    }
+
+    const getResponseErrorMessage = async (
+      response: Response,
+      fallbackMessage: string
+    ) => {
+      try {
+        const responseText = (await response.text()).trim();
+        if (!responseText) return fallbackMessage;
+
+        if (responseText.startsWith("{")) {
+          try {
+            const errorPayload: any = JSON.parse(responseText);
+
+            const title =
+              typeof errorPayload?.title === "string" && errorPayload.title.trim()
+                ? errorPayload.title.trim()
+                : "Request failed";
+
+            const detail =
+              typeof errorPayload?.detail === "string" && errorPayload.detail.trim()
+                ? errorPayload.detail.trim()
+                : "";
+
+            return detail ? `${title}\n${detail}` : title;
+          } catch {
+            return fallbackMessage;
+          }
+        }
+
+        return responseText;
+      } catch {
+        return fallbackMessage;
+      }
+    };
+
 
   useEffect(() => {
     fetchInventory();
@@ -164,8 +206,8 @@ export default function Inventory() {
       });
 
       if (!productResponse.ok) {
-        const error = await productResponse.json();
-        throw new Error(error.message || "Failed to create product");
+        const message = await getResponseErrorMessage(productResponse, "Failed to create product");
+              throw new Error(message);
       }
 
       const newProduct = await productResponse.json();
@@ -174,7 +216,7 @@ export default function Inventory() {
         productForm.initialQuantity &&
         parseFloat(productForm.initialQuantity) > 0
       ) {
-        await fetch("/api/backend/inventory/add", {
+        const response = await fetch("/api/backend/inventory/add", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -184,6 +226,9 @@ export default function Inventory() {
             notes: productForm.notes || "Initial stock",
           }),
         });
+
+        if (!response.ok)
+          throw new Error(await getResponseErrorMessage(response, "Failed to add stock"));
       }
 
       await fetchInventory();
@@ -198,18 +243,15 @@ export default function Inventory() {
         initialQuantity: "",
         notes: "",
       });
+  toast.success("Product created");
     } catch (err) {
-      if (err instanceof Error) {
-        alert(err.message);
-      } else {
-        alert("An unknown error occurred");
-      }
+      toast.error(getErrorMessage(err, "Failed to create product"));
     }
   };
 
   const handleAddStock = async () => {
     if (!selectedProduct) {
-      alert("No product selected");
+      toast.error("No product selected");
       return;
     }
 
@@ -226,16 +268,14 @@ export default function Inventory() {
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to add stock");
+      if (!response.ok)
+        throw new Error(await getResponseErrorMessage(response, "Failed to add stock"));
 
       await fetchInventory();
       closeModals();
+      toast.success("Stock added!")
     } catch (err) {
-      if (err instanceof Error) {
-        alert(err.message);
-      } else {
-        alert("An unknown error occurred");
-      }
+      toast.error(getErrorMessage(err, "Failed to add stock!"));
     }
   };
 
@@ -255,19 +295,15 @@ export default function Inventory() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to remove stock");
+        throw new Error (await getResponseErrorMessage(response, "Failed to remove stock!"));
       }
 
       await fetchInventory();
       closeModals();
+      toast.success("Stock removed!");
     } catch (err) {
-      if (err instanceof Error) {
-        alert(err.message);
-      } else {
-        alert("An unknown error occurred");
+     toast.error(getErrorMessage(err, "Failed to remove stock"));
       }
-    }
   };
 
   const handleAdjustStock = async () => {
@@ -284,16 +320,14 @@ export default function Inventory() {
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to adjust stock");
+      if (!response.ok)
+        throw new Error (await getResponseErrorMessage(response, "Failed to adjust stock!"));
 
       await fetchInventory();
       closeModals();
+      toast.success("Stock adjusted!")
     } catch (err) {
-      if (err instanceof Error) {
-        alert(err.message);
-      } else {
-        alert("An unknown error occurred");
-      }
+      toast.error(getErrorMessage(err, "Failed to adjust stock"));
     }
   };
 
@@ -309,8 +343,7 @@ export default function Inventory() {
       });
 
       if (!categoryResponse.ok) {
-        const error = await categoryResponse.json();
-        throw new Error(error.message || "Failed to create category");
+        throw new Error (await getResponseErrorMessage(categoryResponse, "Failed to create category!"));
       }
 
       setShowCreateCategoryModal(false);
@@ -319,13 +352,10 @@ export default function Inventory() {
         dynamicPricing: true,
       });
       await fetchCategories();
+      toast.success("Category created!")
     } catch (err) {
-      if (err instanceof Error) {
-        alert(err.message);
-      } else {
-        alert("An unknown error occurred");
-      }
-    }
+      toast.error(getErrorMessage(err, "Failed to create category"));
+  }
   }
 
   const handleDeleteProduct = async (id: string) => {
@@ -337,18 +367,13 @@ export default function Inventory() {
       });
 
       if (!deleteResponse.ok) {
-        const error = await deleteResponse.json();
-        throw new Error(error.message || "Failed to delete product");
+        throw new Error (await getResponseErrorMessage(deleteResponse, "Failed to delete products!"));
       }
-
       setShowDeleteProductModal(false);
       await fetchInventory();
+      toast.success("Product deleted!")
     } catch (err) {
-      if (err instanceof Error) {
-        alert(err.message);
-      } else {
-        alert("An unknown error occurred");
-      }
+      toast.error(getErrorMessage(err, "Failed to delete product"));
     }
   }
 
