@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   Edit,
   Minus,
   Package,
@@ -85,6 +88,8 @@ export default function Inventory() {
     initialQuantity: "",
     notes: "",
   });
+  const [sortBy, setSortBy] = useState<"name" | "stock" | "price">("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     fetchInventory();
@@ -403,6 +408,31 @@ export default function Inventory() {
   }
   ) : inventory;
 
+  const sortedInventory = useMemo(() => {
+    const list = [...filteredInventory];
+    list.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === "name") {
+        cmp = (a.productName ?? "").localeCompare(b.productName ?? "", undefined, { sensitivity: "base" });
+      } else if (sortBy === "stock") {
+        cmp = parseFloat(a.quantity) - parseFloat(b.quantity);
+      } else {
+        cmp = parseFloat(a.basePrice) - parseFloat(b.basePrice);
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return list;
+  }, [filteredInventory, sortBy, sortDir]);
+
+  const handleSort = (field: "name" | "stock" | "price") => {
+    if (sortBy === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(field);
+      setSortDir("asc");
+    }
+  };
+
   // @ts-expect-error: types aren't imported currently from backend
   const getStockStatus = (quantity) => {
     const qty = parseFloat(quantity);
@@ -482,10 +512,24 @@ export default function Inventory() {
               <thead>
                 <tr className="border-b border-gray-400">
                   <th className="text-left py-3 px-4 font-semibold text-gray-300">
-                    Product
+                    <button
+                      type="button"
+                      onClick={() => handleSort("name")}
+                      className="inline-flex items-center gap-1 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                    >
+                      Product
+                      {sortBy === "name" ? (sortDir === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />) : <ArrowUpDown className="w-4 h-4 opacity-50" />}
+                    </button>
                   </th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-300">
-                    Current Price
+                    <button
+                      type="button"
+                      onClick={() => handleSort("price")}
+                      className="inline-flex items-center gap-1 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                    >
+                      Current Price
+                      {sortBy === "price" ? (sortDir === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />) : <ArrowUpDown className="w-4 h-4 opacity-50" />}
+                    </button>
                   </th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-300">
                     Min Price
@@ -494,7 +538,14 @@ export default function Inventory() {
                     Max Price
                   </th>
                   <th className="text-center py-3 px-4 font-semibold text-gray-300">
-                    Quantity
+                    <button
+                      type="button"
+                      onClick={() => handleSort("stock")}
+                      className="inline-flex items-center gap-1 hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 rounded mx-auto"
+                    >
+                      Quantity
+                      {sortBy === "stock" ? (sortDir === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />) : <ArrowUpDown className="w-4 h-4 opacity-50" />}
+                    </button>
                   </th>
                   <th className="text-center py-3 px-4 font-semibold text-gray-300">
                     Status
@@ -508,14 +559,14 @@ export default function Inventory() {
                 </tr>
               </thead>
               <tbody>
-                {filteredInventory.length === 0 ? (
+                {sortedInventory.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="text-center py-8 text-gray-400">
                       No inventory items found
                     </td>
                   </tr>
                 ) : (
-                  filteredInventory.map((item) => {
+                  sortedInventory.map((item) => {
                     // @ts-expect-error: types aren't imported currently from backend
                     const status = getStockStatus(item.quantity);
                     return (
