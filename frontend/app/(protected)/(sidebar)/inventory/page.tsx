@@ -45,6 +45,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -417,6 +418,21 @@ export default function Inventory() {
     return { color: "text-green-100", bg: "bg-green-900", label: "In Stock" };
   };
 
+  const getRelativeTime = (date: Date): string => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+    const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+    if (diffSec < 60) return rtf.format(-diffSec, "second");
+    if (diffMin < 60) return rtf.format(-diffMin, "minute");
+    if (diffHour < 24) return rtf.format(-diffHour, "hour");
+    if (diffDay < 30) return rtf.format(-diffDay, "day");
+    return rtf.format(-Math.floor(diffDay / 30), "month");
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen w-full bg-background p-4 flex items-center justify-center">
@@ -558,8 +574,17 @@ export default function Inventory() {
                             {status.label}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray400">
-                          {new Date(item.updatedAt).toLocaleString()}
+                        <td className="py-3 px-4 text-sm text-gray-400">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="cursor-default underline decoration-dotted decoration-gray-500">
+                                {getRelativeTime(new Date(item.updatedAt))}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              {new Date(item.updatedAt).toLocaleString()}
+                            </TooltipContent>
+                          </Tooltip>
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex justify-center gap-2 flex-wrap">
