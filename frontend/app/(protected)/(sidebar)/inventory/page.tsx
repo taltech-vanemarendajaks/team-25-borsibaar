@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   AlertCircle,
   Edit,
@@ -12,6 +12,7 @@ import {
   User,
   ListPlus,
   Trash,
+  MoreVertical,
 } from "lucide-react";
 
 interface InventoryTransactionResponseDto {
@@ -85,11 +86,23 @@ export default function Inventory() {
     initialQuantity: "",
     notes: "",
   });
+  const [openMoreMenuId, setOpenMoreMenuId] = useState<number | null>(null);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchInventory();
     fetchCategories();
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (openMoreMenuId !== null && moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setOpenMoreMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openMoreMenuId]);
 
   const fetchInventory = async () => {
     try {
@@ -527,7 +540,7 @@ export default function Inventory() {
                           <div className="font-medium text-gray-300">
                             {item.productName}
                           </div>
-                          <div className="text-sm text-gray-400">
+                          <div className="text-xs text-gray-500">
                             ID: {item.productId}
                           </div>
                         </td>
@@ -537,12 +550,12 @@ export default function Inventory() {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-center">
-                          <span className="text-lg text-gray-300">
+                          <span className="text-sm text-gray-500">
                             {isNaN(parseFloat(item.minPrice)) ? "--" : parseFloat(item.minPrice).toFixed(2)}€
                           </span>
                         </td>
                         <td className="py-3 px-4 text-center">
-                          <span className="text-lg text-gray-300">
+                          <span className="text-sm text-gray-500">
                             {isNaN(parseFloat(item.maxPrice)) ? "--" : parseFloat(item.maxPrice).toFixed(2)}€
                           </span>
                         </td>
@@ -562,42 +575,65 @@ export default function Inventory() {
                           {new Date(item.updatedAt).toLocaleString()}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex justify-center gap-2 flex-wrap">
+                          <div className="flex justify-center gap-2 flex-wrap items-center relative" ref={openMoreMenuId === item.id ? moreMenuRef : undefined}>
                             <Button
                               onClick={() => openAddModal(item)}
-                              className="p-2 text-green-100 bg-green-700 hover:bg-green-800 rounded-lg transition"
+                              variant="outline"
+                              className="p-2 bg-transparent border border-green-500 text-green-500 hover:bg-green-500 hover:text-white rounded-lg transition"
                               title="Add Stock"
                             >
                               <Plus className="w-4 h-4" />
                             </Button>
                             <Button
                               onClick={() => openRemoveModal(item)}
-                              className="p-2 text-red-100 bg-red-700 hover:bg-red-800 rounded-lg transition"
+                              variant="outline"
+                              className="p-2 bg-transparent border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition"
                               title="Remove Stock"
                             >
                               <Minus className="w-4 h-4" />
                             </Button>
                             <Button
                               onClick={() => openAdjustModal(item)}
-                              className="p-2 text-blue-100 bg-blue-700 hover:bg-blue-800 rounded-lg transition"
+                              variant="outline"
+                              className="p-2 bg-transparent border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white rounded-lg transition"
                               title="Adjust Stock"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
                             <Button
-                              onClick={() => openHistoryModal(item)}
-                              className="p-2 text-gray-400 bg-gray-700 hover:bg-gray-800 rounded-lg transition"
-                              title="View History"
+                              onClick={() => setOpenMoreMenuId(openMoreMenuId === item.id ? null : item.id)}
+                              variant="outline"
+                              className="p-2 bg-transparent border border-gray-500 text-gray-400 hover:bg-gray-600 hover:text-white rounded-lg transition"
+                              title="More options"
                             >
-                              <History className="w-4 h-4" />
+                              <MoreVertical className="w-4 h-4" />
                             </Button>
-                            <Button
-                              onClick={() => openDeleteModal(item)}
-                              className="p-2 text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition"
-                              title="Delete Product"
-                            >
-                              <Trash className="w-4 h-4" />
-                            </Button>
+                            {openMoreMenuId === item.id && (
+                              <div className="absolute right-0 top-full mt-1 z-10 min-w-[140px] rounded-lg border border-gray-600 bg-gray-800 shadow-lg py-1">
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    setOpenMoreMenuId(null);
+                                    await openHistoryModal(item);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-700 rounded-t-lg"
+                                >
+                                  <History className="w-4 h-4" />
+                                  History
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMoreMenuId(null);
+                                    openDeleteModal(item);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 rounded-b-lg"
+                                >
+                                  <Trash className="w-4 h-4" />
+                                  Delete
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>
