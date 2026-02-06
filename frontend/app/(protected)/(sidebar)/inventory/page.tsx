@@ -21,12 +21,32 @@ interface InventoryTransactionResponseDto {
   quantityChange: number;
   quantityBefore: number;
   quantityAfter: number;
+  priceBefore?: number;
+  priceAfter?: number;
   referenceId?: string;
   notes?: string;
   createdBy: string;
   createdByName?: string;
   createdByEmail?: string;
   createdAt: string;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  dynamicPricing?: boolean;
+}
+
+interface InventoryItem {
+  id: number;
+  productId: number;
+  productName: string;
+  basePrice: string | number;
+  minPrice?: string | number;
+  maxPrice?: string | number;
+  quantity: string | number;
+  updatedAt: string;
+  unitPrice?: string | number;
 }
 import {
   Select,
@@ -49,7 +69,7 @@ import { Button } from "@/components/ui/button";
 export const dynamic = "force-dynamic";
 
 export default function Inventory() {
-  const [inventory, setInventory] = useState([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -57,7 +77,7 @@ export default function Inventory() {
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null);
   const [transactionHistory, setTransactionHistory] = useState<
     InventoryTransactionResponseDto[]
   >([]);
@@ -69,7 +89,7 @@ export default function Inventory() {
   });
   const [showCreateProductModal, setShowCreateProductModal] = useState(false);
   const [showDeleteProductModal, setShowDeleteProductModal] = useState(false);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [showCreateCategoryModal, setShowCreateCategoryModal] = useState(false);
   const [categoryForm, setCategoryForm] = useState({
     name: "",
@@ -86,6 +106,14 @@ export default function Inventory() {
     notes: "",
   });
 
+  const [showPriceModal, setShowPriceModal] = useState(false);
+  const [selectedProductForPrice, setSelectedProductForPrice] = useState<InventoryItem | null>(null);
+  const [priceError, setPriceError] = useState<string | null>(null);
+  const [priceForm, setPriceForm] = useState({
+    newPrice: "",
+    notes: "",
+  });
+
   useEffect(() => {
     fetchInventory();
     fetchCategories();
@@ -96,6 +124,7 @@ export default function Inventory() {
       setLoading(true);
       const response = await fetch("/api/backend/inventory", {
         cache: "no-store",
+        credentials: "include",
       });
 
       if (!response.ok) throw new Error("Failed to fetch inventory");
@@ -296,6 +325,95 @@ export default function Inventory() {
       }
     }
   };
+  const openPriceModal = (item: InventoryItem) => {
+    setSelectedProductForPrice(item);
+    setPriceError(null);
+    setPriceForm({
+      newPrice: String(item.unitPrice || item.basePrice || ""),
+      notes: "",
+    });
+    setShowPriceModal(true);
+  };
+
+  const handleUpdatePrice = async () => {
+    if (!selectedProductForPrice) return;
+
+    const newPrice = parseFloat(priceForm.newPrice);
+    if (isNaN(newPrice) || newPrice <= 0) {
+      setPriceError("Please enter a valid price");
+      return;
+    }
+
+    try {
+      setPriceError(null);
+      const response = await fetch(
+        `/api/backend/inventory/product/${selectedProductForPrice.productId}/price`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            newPrice: newPrice,
+            notes: priceForm.notes || null,
+          }),
+        }
+      );
+
+      const errorText = await response.text();
+      if (!response.ok) {
+        let errorMessage = "Failed to update price";
+        try {
+          let data: { detail?: string; error?: string; message?: string } =
+            {};
+          if (errorText) {
+            try {
+              data = JSON.parse(errorText);
+            } catch {
+              if (!errorText.startsWith("{")) errorMessage = errorText;
+            }
+          }
+          const raw = data.detail ?? data.error ?? data.message ?? "";
+          if (typeof raw === "string" && raw.length > 0) {
+            errorMessage = raw;
+            if (errorMessage.startsWith("{")) {
+              try {
+                const inner = JSON.parse(errorMessage);
+                errorMessage =
+                  inner.detail ?? inner.error ?? inner.message ?? errorMessage;
+              } catch {
+                /* keep raw */
+              }
+            }
+            errorMessage = errorMessage.replace(
+              /(\d+\.\d{2})\d*/g,
+              (_, n) => parseFloat(n).toFixed(2)
+            );
+          }
+        } catch {
+          if (errorText && !errorText.startsWith("{")) errorMessage = errorText;
+        }
+        setPriceError(errorMessage);
+        return;
+      }
+
+      setError(null);
+      setPriceError(null);
+      setInventory((prev) =>
+        prev.map((item) =>
+          item.productId === selectedProductForPrice.productId
+            ? { ...item, unitPrice: newPrice }
+            : item
+        )
+      );
+      await fetchInventory();
+      setShowPriceModal(false);
+      setSelectedProductForPrice(null);
+      setPriceForm({ newPrice: "", notes: "" });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to update price";
+      setPriceError(errorMessage);
+    }
+  };
 
   const handleAddCategory = async () => {
     try {
@@ -375,7 +493,7 @@ export default function Inventory() {
   const openDeleteModal = (item) => {
     setSelectedProduct(item);
     setShowDeleteProductModal(true);
-  }
+  };
 
   // @ts-expect-error: types aren't imported currently from backend
   const openRemoveModal = (item) => {
@@ -397,9 +515,9 @@ export default function Inventory() {
     await fetchTransactionHistory(item.productId);
   };
 
-  const filteredInventory = searchTerm?.trim().length > 0 ? inventory.filter((item) => {
+  const filteredInventory = searchTerm.trim().length > 0 ? inventory.filter((item) => {
     // @ts-expect-error: types aren't imported currently from backend
-    return item.productName.toLowerCase().includes(searchTerm.toLowerCase())
+    return item.productName.toLowerCase().includes(searchTerm.toLowerCase());
   }
   ) : inventory;
 
@@ -430,7 +548,7 @@ export default function Inventory() {
 
   return (
     <div className="min-h-screen bg-background p-4">
-        <div className="rounded-lg bg-card p-6 shadow-sm border-1 border-[color-mix(in oklab, var(--ring) 50%, transparent)]">
+        <div className="rounded-lg bg-card p-6 shadow-sm border border-[color-mix(in oklab, var(--ring) 50%, transparent)]">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <Package className="w-8 h-8 text-blue-600" />
@@ -510,7 +628,7 @@ export default function Inventory() {
               <tbody>
                 {filteredInventory.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-8 text-gray-400">
+                    <td colSpan={8} className="text-center py-8 text-gray-400">
                       No inventory items found
                     </td>
                   </tr>
@@ -533,22 +651,22 @@ export default function Inventory() {
                         </td>
                         <td className="py-3 px-4 text-center">
                           <span className="text-lg font-semibold text-gray-300">
-                            {parseFloat(item.basePrice).toFixed(2)}€
+                            {parseFloat(String(item.unitPrice ?? item.basePrice)).toFixed(2)}€
                           </span>
                         </td>
                         <td className="py-3 px-4 text-center">
                           <span className="text-lg text-gray-300">
-                            {isNaN(parseFloat(item.minPrice)) ? "--" : parseFloat(item.minPrice).toFixed(2)}€
+                            {item.minPrice && !isNaN(parseFloat(String(item.minPrice))) ? parseFloat(String(item.minPrice)).toFixed(2) : "--"}€
                           </span>
                         </td>
                         <td className="py-3 px-4 text-center">
                           <span className="text-lg text-gray-300">
-                            {isNaN(parseFloat(item.maxPrice)) ? "--" : parseFloat(item.maxPrice).toFixed(2)}€
+                            {item.maxPrice && !isNaN(parseFloat(String(item.maxPrice))) ? parseFloat(String(item.maxPrice)).toFixed(2) : "--"}€
                           </span>
                         </td>
                         <td className="py-3 px-4 text-center">
                           <span className="text-lg font-semibold text-gray-300">
-                            {parseFloat(item.quantity).toFixed(2)}
+                            {parseFloat(String(item.quantity)).toFixed(2)}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-center">
@@ -590,6 +708,13 @@ export default function Inventory() {
                               title="View History"
                             >
                               <History className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={() => openPriceModal(item)}
+                              className="p-2 text-yellow-100 bg-yellow-700 hover:bg-yellow-800 rounded-lg transition"
+                              title="Update Price"
+                            >
+                              <Edit className="w-4 h-4" />
                             </Button>
                             <Button
                               onClick={() => openDeleteModal(item)}
@@ -731,7 +856,7 @@ export default function Inventory() {
                   })
                 }
                 className="w-full px-3 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows="3"
+                rows={3}
                 placeholder="Product description (optional)"
               />
             </div>
@@ -821,7 +946,7 @@ export default function Inventory() {
               className="bg-rose-600 hover:bg-rose-700 text-white"
               onClick={() => {
                 const id = selectedProduct?.productId ?? selectedProduct?.id;
-                if (id) handleDeleteProduct(Number(id));
+                if (id) handleDeleteProduct(String(id));
               }}
             >
               Delete
@@ -934,7 +1059,7 @@ export default function Inventory() {
                   setFormData({ ...formData, notes: e.target.value })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows="3"
+                rows={3}
                 placeholder="e.g., Weekly restock"
               />
             </div>
@@ -1009,7 +1134,7 @@ export default function Inventory() {
                   setFormData({ ...formData, notes: e.target.value })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows="3"
+                rows={3}
                 placeholder="e.g., Sold to customer"
               />
             </div>
@@ -1070,7 +1195,7 @@ export default function Inventory() {
                   setFormData({ ...formData, notes: e.target.value })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows="3"
+                rows={3}
                 placeholder="e.g., Inventory correction"
               />
             </div>
@@ -1150,18 +1275,34 @@ export default function Inventory() {
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-400">Before:</span>
+                        <span className="text-gray-400">Qty Before:</span>
                         <span className="ml-1 font-semibold text-gray-300">
                           {Number(transaction.quantityBefore).toFixed(2)}
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-400">After:</span>
+                        <span className="text-gray-400">Qty After:</span>
                         <span className="ml-1 font-semibold text-gray-300">
                           {Number(transaction.quantityAfter).toFixed(2)}
                         </span>
                       </div>
                     </div>
+                    {(transaction.priceBefore != null || transaction.priceAfter != null) && (
+                      <div className="grid grid-cols-2 gap-2 text-sm mt-2 pt-2 border-t border-gray-700">
+                        <div>
+                          <span className="text-gray-400">Price before:</span>
+                          <span className="ml-1 font-semibold text-gray-300">
+                            {Number(transaction.priceBefore ?? 0).toFixed(2)}€
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Price after:</span>
+                          <span className="ml-1 font-semibold text-gray-300">
+                            {Number(transaction.priceAfter ?? 0).toFixed(2)}€
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     {transaction.notes && (
                       <p className="text-sm text-gray-300 mt-2">
                         {transaction.notes}
@@ -1187,6 +1328,107 @@ export default function Inventory() {
                 ))}
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Update Price Dialog */}
+      <Dialog
+        open={showPriceModal}
+        onOpenChange={(open) => {
+          setShowPriceModal(open);
+          if (!open) setPriceError(null);
+        }}
+      >
+        <DialogContent className="bg-gray-900 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">Update Price</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Manually override the price for {selectedProductForPrice?.productName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Current Price
+              </label>
+              <Input
+                value={selectedProductForPrice?.unitPrice || selectedProductForPrice?.basePrice || "0.00"}
+                disabled
+                className="bg-gray-800 text-gray-400"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                New Price *
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={priceForm.newPrice}
+                onChange={(e) =>
+                  setPriceForm({ ...priceForm, newPrice: e.target.value })
+                }
+                placeholder="Enter new price"
+                className="bg-gray-800 text-white"
+              />
+              {selectedProductForPrice && (
+                <div className="mt-2 p-2 rounded bg-gray-800/80 border border-gray-700">
+                  <p className="text-sm font-medium text-gray-300 mb-1">Price limits</p>
+                  <p className="text-sm text-gray-400">
+                    Min: {selectedProductForPrice.minPrice != null && selectedProductForPrice.minPrice !== ""
+                      ? Number(selectedProductForPrice.minPrice).toFixed(2)
+                      : "N/A"}€
+                    {" · "}
+                    Max: {selectedProductForPrice.maxPrice != null && selectedProductForPrice.maxPrice !== ""
+                      ? Number(selectedProductForPrice.maxPrice).toFixed(2)
+                      : "N/A"}€
+                  </p>
+                  {(selectedProductForPrice.minPrice == null || selectedProductForPrice.minPrice === "") &&
+                   (selectedProductForPrice.maxPrice == null || selectedProductForPrice.maxPrice === "") && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      No min/max set – any positive price is allowed.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+            {priceError && (
+              <div className="p-3 rounded-lg bg-red-950/80 border border-red-800 text-red-50 text-sm flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{priceError}</span>
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Notes (optional)
+              </label>
+              <Textarea
+                value={priceForm.notes}
+                onChange={(e) =>
+                  setPriceForm({ ...priceForm, notes: e.target.value })
+                }
+                placeholder="Add notes about this price change"
+                className="bg-gray-800 text-white"
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                onClick={() => setShowPriceModal(false)}
+                variant="outline"
+                className="bg-gray-800 text-gray-300"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUpdatePrice}
+                className="bg-yellow-700 hover:bg-yellow-800 text-white"
+              >
+                Update Price
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

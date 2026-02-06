@@ -247,6 +247,60 @@ public class InventoryService {
                 base.updatedAt());
     }
 
+    @Transactional
+public InventoryResponseDto updatePrice(
+    Long productId, 
+    BigDecimal newPrice, 
+    String notes,
+    UUID userId, 
+    Long organizationId
+) {
+    Product product = getOrganizationProduct(organizationId, productId);
+    
+    Inventory inventory = inventoryRepository
+        .findByOrganizationIdAndProductId(organizationId, productId)
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND, "No inventory found for this product"));
+    
+    BigDecimal oldPrice = Optional.ofNullable(inventory.getAdjustedPrice())
+        .orElse(product.getBasePrice());
+    
+    // Kontrolli, et uus hind on min/max piirides
+    if (product.getMinPrice() != null && newPrice.compareTo(product.getMinPrice()) < 0) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, 
+            "Price " + newPrice + " is below minimum price " + product.getMinPrice());
+    }
+    if (product.getMaxPrice() != null && newPrice.compareTo(product.getMaxPrice()) > 0) {
+        throw new ResponseStatusException(
+            HttpStatus.BAD_REQUEST, 
+            "Price " + newPrice + " is above maximum price " + product.getMaxPrice());
+    }
+    
+    inventory.setAdjustedPrice(newPrice);
+    inventory.setUpdatedAt(OffsetDateTime.now());
+    inventory = inventoryRepository.save(inventory);
+    
+    // Loo transaction
+    createTransaction(inventory, "ADJUSTMENT", BigDecimal.ZERO,
+        inventory.getQuantity(), inventory.getQuantity(),
+        oldPrice, newPrice, null, notes, userId);
+    
+    InventoryResponseDto base = inventoryMapper.toResponse(inventory);
+    return new InventoryResponseDto(
+        base.id(),
+        base.organizationId(),
+        base.productId(),
+        product.getName(),
+        base.quantity(),
+        newPrice,
+        product.getDescription(), 
+        product.getBasePrice(),
+        product.getMinPrice(),
+        product.getMaxPrice(),
+        base.updatedAt());
+}
+
     @Transactional(readOnly = true)
     public List<InventoryTransactionResponseDto> getTransactionHistory(Long productId, Long organizationId) {
         Inventory inventory = inventoryRepository
