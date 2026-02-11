@@ -17,7 +17,7 @@ export function UserSelectionList({
 }: UserSelectionListProps) {
   const handleToggle = (userId: string) => {
     if (selectedUserIds.includes(userId)) {
-      onSelectionChange(selectedUserIds.filter((id) => id !== userId));
+      onSelectionChange(selectedUserIds.filter(id => id !== userId));
     } else {
       onSelectionChange([...selectedUserIds, userId]);
     }
@@ -26,30 +26,26 @@ export function UserSelectionList({
   return (
     <div>
       <Label>Assign Users</Label>
-      <div className="mt-2 max-h-48 overflow-y-auto border rounded-md p-3 space-y-2">
+      <div className="mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border p-3">
         {error ? (
           <p className="text-sm text-red-400">{error}</p>
         ) : users.length === 0 ? (
           <p className="text-sm text-gray-400">No users available</p>
         ) : (
-          users.map((user) => {
+          users.map(user => {
             const isChecked = selectedUserIds.includes(user.id.toString());
             return (
               <div
                 key={user.id}
-                className="flex items-center gap-2 cursor-pointer hover:bg-gray-700/50 p-2 rounded"
+                className="flex cursor-pointer items-center gap-2 rounded p-2 hover:bg-gray-700/50"
                 onClick={() => handleToggle(user.id.toString())}
               >
                 <Checkbox
                   checked={isChecked}
                   onCheckedChange={() => handleToggle(user.id.toString())}
                 />
-                <span className="text-sm text-gray-200">
-                  {user.name || user.email}
-                </span>
-                {user.role && (
-                  <span className="text-xs text-gray-400">({user.role})</span>
-                )}
+                <span className="text-sm text-gray-200">{user.name || user.email}</span>
+                {user.role && <span className="text-xs text-gray-400">({user.role})</span>}
               </div>
             );
           })

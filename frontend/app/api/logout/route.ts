@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     // Create response
     const response = NextResponse.json(
       { success: true, message: "Logged out successfully" },
-      { status: 200 }
+      { status: 200 },
     );
 
     // Clear the JWT cookie (backend also does this, but we do it here too for redundancy)
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     // Even if backend fails, clear the cookie
     const response = NextResponse.json(
       { success: false, message: "Logout failed" },
-      { status: 500 }
+      { status: 500 },
     );
 
     response.cookies.set("jwt", "", {

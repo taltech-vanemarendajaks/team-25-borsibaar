@@ -15,7 +15,7 @@ export function CategoryFilter({
   onCategoryChange,
 }: CategoryFilterProps) {
   return (
-    <div className="flex items-center gap-2 mb-4 flex-wrap">
+    <div className="mb-4 flex flex-wrap items-center gap-2">
       <Button
         variant={selectedCategory === null ? "default" : "outline"}
         onClick={() => onCategoryChange(null)}
@@ -23,7 +23,7 @@ export function CategoryFilter({
       >
         All Categories
       </Button>
-      {categories.map((category) => (
+      {categories.map(category => (
         <Button
           key={category.id}
           variant={selectedCategory === category.id ? "default" : "outline"}

@@ -14,11 +14,7 @@ interface StationCardProps {
   editingStationId: number | null;
   onEditClick: (station: BarStation) => void;
   onEditClose: () => void;
-  onUpdate: (data: {
-    name: string;
-    description: string;
-    userIds: string[];
-  }) => Promise<void>;
+  onUpdate: (data: { name: string; description: string; userIds: string[] }) => Promise<void>;
   onDelete: (stationId: number) => void;
 }
 
@@ -36,35 +32,31 @@ export function StationCard({
   const router = useRouter();
 
   return (
-    <div className="bg-card p-4 sm:p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow w-full max-w-full overflow-hidden border-1 border-[color-mix(in oklab, var(--ring) 50%, transparent)]">
-      <div className="flex items-start justify-between mb-3 gap-2">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-xl font-bold text-gray-100 mb-1 truncate">
-            {station.name}
-          </h3>
+    <div className="bg-card border-[color-mix(in oklab, var(--ring) 50%, transparent)] w-full max-w-full overflow-hidden rounded-lg border border-1 p-4 shadow-sm transition-shadow hover:shadow-md sm:p-6">
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="mb-1 truncate text-xl font-bold text-gray-100">{station.name}</h3>
           {station.description && (
-            <p className="text-sm text-gray-400 line-clamp-2 break-words">
-              {station.description}
-            </p>
+            <p className="line-clamp-2 text-sm break-words text-gray-400">{station.description}</p>
           )}
         </div>
-        <Store className="w-5 h-5 text-blue-400 flex-shrink-0" />
+        <Store className="h-5 w-5 flex-shrink-0 text-blue-400" />
       </div>
 
       {station.assignedUsers && station.assignedUsers.length > 0 && (
         <div className="mb-4">
-          <p className="text-xs text-gray-400 mb-1">Assigned Users:</p>
+          <p className="mb-1 text-xs text-gray-400">Assigned Users:</p>
           <div className="flex flex-wrap gap-1">
             {station.assignedUsers.slice(0, 3).map((user: User) => (
               <span
                 key={user.id}
-                className="text-xs px-2 py-1 bg-gray-700 text-gray-300 rounded truncate max-w-full"
+                className="max-w-full truncate rounded bg-gray-700 px-2 py-1 text-xs text-gray-300"
               >
                 {user.name || user.email}
               </span>
             ))}
             {station.assignedUsers.length > 3 && (
-              <span className="text-xs px-2 py-1 bg-gray-700 text-gray-300 rounded">
+              <span className="rounded bg-gray-700 px-2 py-1 text-xs text-gray-300">
                 +{station.assignedUsers.length - 3} more
               </span>
             )}
@@ -72,23 +64,23 @@ export function StationCard({
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <Button
           onClick={() => router.push(`/pos/${station.id}`)}
-          className="flex-1 w-full sm:w-auto bg-green-600 hover:bg-green-700 min-w-0"
+          className="w-full min-w-0 flex-1 bg-green-600 hover:bg-green-700 sm:w-auto"
         >
           <span className="truncate">Open Station</span>
         </Button>
 
         {isAdmin && (
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="flex flex-shrink-0 gap-2">
             <StationDialog
               mode="edit"
               station={station}
               users={allUsers}
               userFetchError={userFetchError}
               isOpen={editingStationId === station.id}
-              onOpenChange={(open) => {
+              onOpenChange={open => {
                 if (!open) {
                   onEditClose();
                 } else {
@@ -103,7 +95,7 @@ export function StationCard({
                   onClick={() => onEditClick(station)}
                   className="flex-shrink-0"
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit className="h-4 w-4" />
                 </Button>
               }
             />
@@ -114,7 +106,7 @@ export function StationCard({
               onClick={() => onDelete(station.id)}
               className="flex-shrink-0"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         )}

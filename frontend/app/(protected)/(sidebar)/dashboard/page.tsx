@@ -68,10 +68,9 @@ export default function Dashboard() {
       if (userJson.organizationId) {
         // Fetch organization via Next.js proxy to avoid CORS and forward cookies
         try {
-          const orgRes = await fetch(
-            `/api/backend/organizations/${userJson.organizationId}`,
-            { cache: "no-store" }
-          );
+          const orgRes = await fetch(`/api/backend/organizations/${userJson.organizationId}`, {
+            cache: "no-store",
+          });
           if (orgRes.ok) {
             const org = await orgRes.json();
             setOrgName(org?.name || "Unknown Organization");
@@ -102,10 +101,9 @@ export default function Dashboard() {
         }
 
         try {
-          const stationStatsRes = await fetch(
-            `/api/backend/inventory/station-sales-stats`,
-            { cache: "no-store" }
-          );
+          const stationStatsRes = await fetch(`/api/backend/inventory/station-sales-stats`, {
+            cache: "no-store",
+          });
           if (stationStatsRes.ok) {
             const stationStatsJson = await stationStatsRes.json();
             if (Array.isArray(stationStatsJson)) setStationStats(stationStatsJson);
@@ -136,27 +134,22 @@ export default function Dashboard() {
     fetchAll();
   }, [fetchAll]);
 
-  async function handleOrgUpdate(
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> {
+  async function handleOrgUpdate(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     if (!me?.organizationId || !orgDetails) return;
     setSaving(true);
     setSaveError(null);
     setSaveSuccess(null);
     try {
-      const res = await fetch(
-        `/api/backend/organizations/${me.organizationId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: orgDetails.name,
-            priceIncreaseStep: orgDetails.priceIncreaseStep,
-            priceDecreaseStep: orgDetails.priceDecreaseStep,
-          }),
-        }
-      );
+      const res = await fetch(`/api/backend/organizations/${me.organizationId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: orgDetails.name,
+          priceIncreaseStep: orgDetails.priceIncreaseStep,
+          priceDecreaseStep: orgDetails.priceDecreaseStep,
+        }),
+      });
       if (!res.ok) throw new Error(`Update failed: ${res.status}`);
       const updated = await res.json();
       setOrgDetails({
@@ -170,11 +163,7 @@ export default function Dashboard() {
       });
       setSaveSuccess("Organization updated successfully");
     } catch (err) {
-      setSaveError(
-        err instanceof Error
-          ? err.message
-          : "Failed to update organization"
-      );
+      setSaveError(err instanceof Error ? err.message : "Failed to update organization");
     } finally {
       setSaving(false);
     }
@@ -182,9 +171,9 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-background p-4 flex items-center justify-center">
+      <div className="bg-background flex min-h-screen w-full items-center justify-center p-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
           <p className="text-gray-600">Loading dashboard...</p>
         </div>
       </div>
@@ -196,219 +185,180 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
-        <div className="rounded-lg bg-card p-6 shadow border-1 border-[color-mix(in oklab, var(--ring) 50%, transparent)]">
-          {error && (
-            <div className="mb-4 rounded border border-destructive/50 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-              {error}
-            </div>
-          )}
-          <h1 className="text-3xl font-bold text-card-foreground mb-4">
-            Welcome, {me.name || me.email}!
-          </h1>
-          <div className="space-y-2 text-muted-foreground mb-6">
-            <p>
-              <span className="font-medium text-card-foreground">Email:</span>{" "}
-              {me.email}
-            </p>
-            <p>
-              <span className="font-medium text-card-foreground">
-                Organization:
-              </span>{" "}
-              {orgName}
-            </p>
-            <p>
-              <span className="font-medium text-card-foreground">Role:</span>{" "}
-              {me.role || "No role assigned"}
-            </p>
+    <div className="bg-background min-h-screen p-4">
+      <div className="bg-card border-[color-mix(in oklab, var(--ring) 50%, transparent)] rounded-lg border-1 p-6 shadow">
+        {error && (
+          <div className="border-destructive/50 bg-destructive/10 text-destructive mb-4 rounded border px-4 py-2 text-sm">
+            {error}
           </div>
+        )}
+        <h1 className="text-card-foreground mb-4 text-3xl font-bold">
+          Welcome, {me.name || me.email}!
+        </h1>
+        <div className="text-muted-foreground mb-6 space-y-2">
+          <p>
+            <span className="text-card-foreground font-medium">Email:</span> {me.email}
+          </p>
+          <p>
+            <span className="text-card-foreground font-medium">Organization:</span> {orgName}
+          </p>
+          <p>
+            <span className="text-card-foreground font-medium">Role:</span>{" "}
+            {me.role || "No role assigned"}
+          </p>
+        </div>
 
-          {stationStats.length > 0 && (
-            <div className="rounded-lg bg-card p-6 shadow mb-6">
-              <h2 className="text-xl font-semibold text-card-foreground mb-4">
-                Station Leaderboard
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-2 text-muted-foreground font-medium">
-                        Station
-                      </th>
-                      <th className="text-left py-2 text-muted-foreground font-medium">
-                        Sales Count
-                      </th>
-                      <th className="text-left py-2 text-muted-foreground font-medium">
-                        Total Revenue
-                      </th>
+        {stationStats.length > 0 && (
+          <div className="bg-card mb-6 rounded-lg p-6 shadow">
+            <h2 className="text-card-foreground mb-4 text-xl font-semibold">Station Leaderboard</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-border border-b">
+                    <th className="text-muted-foreground py-2 text-left font-medium">Station</th>
+                    <th className="text-muted-foreground py-2 text-left font-medium">
+                      Sales Count
+                    </th>
+                    <th className="text-muted-foreground py-2 text-left font-medium">
+                      Total Revenue
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stationStats.map(stat => (
+                    <tr key={stat.barStationId} className="border-border border-b last:border-0">
+                      <td className="py-3">
+                        <div className="text-card-foreground font-medium">
+                          {stat.barStationName || `Station ${stat.barStationId}`}
+                        </div>
+                      </td>
+                      <td className="text-card-foreground py-3 font-medium">{stat.salesCount}</td>
+                      <td className="text-card-foreground py-3 font-medium">
+                        €{stat.totalRevenue.toFixed(2)}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {stationStats.map((stat) => (
-                      <tr
-                        key={stat.barStationId}
-                        className="border-b border-border last:border-0"
-                      >
-                        <td className="py-3">
-                          <div className="font-medium text-card-foreground">
-                            {stat.barStationName || `Station ${stat.barStationId}`}
-                          </div>
-                        </td>
-                        <td className="py-3 text-card-foreground font-medium">
-                          {stat.salesCount}
-                        </td>
-                        <td className="py-3 text-card-foreground font-medium">
-                          €{stat.totalRevenue.toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
+          </div>
+        )}
 
-          {salesStats.length > 0 && (
-            <div className="rounded-lg bg-card p-6 shadow">
-              <h2 className="text-xl font-semibold text-card-foreground mb-4">
-                Sales Performance by User
-              </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-2 text-muted-foreground font-medium">
-                        User
-                      </th>
-                      <th className="text-left py-2 text-muted-foreground font-medium">
-                        Station
-                      </th>
-                      <th className="text-left py-2 text-muted-foreground font-medium">
-                        Sales Count
-                      </th>
-                      <th className="text-left py-2 text-muted-foreground font-medium">
-                        Total Revenue
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {salesStats.map((stat, index) => (
-                      <tr
-                        key={`${stat.userId}-${
-                          stat.barStationId || "null"
-                        }-${index}`}
-                        className="border-b border-border last:border-0"
-                      >
-                        <td className="py-3">
-                          <div>
-                            <div className="font-medium text-card-foreground">
-                              {stat.userName || "Unknown User"}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {stat.userEmail}
-                            </div>
+        {salesStats.length > 0 && (
+          <div className="bg-card rounded-lg p-6 shadow">
+            <h2 className="text-card-foreground mb-4 text-xl font-semibold">
+              Sales Performance by User
+            </h2>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-border border-b">
+                    <th className="text-muted-foreground py-2 text-left font-medium">User</th>
+                    <th className="text-muted-foreground py-2 text-left font-medium">Station</th>
+                    <th className="text-muted-foreground py-2 text-left font-medium">
+                      Sales Count
+                    </th>
+                    <th className="text-muted-foreground py-2 text-left font-medium">
+                      Total Revenue
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {salesStats.map((stat, index) => (
+                    <tr
+                      key={`${stat.userId}-${stat.barStationId || "null"}-${index}`}
+                      className="border-border border-b last:border-0"
+                    >
+                      <td className="py-3">
+                        <div>
+                          <div className="text-card-foreground font-medium">
+                            {stat.userName || "Unknown User"}
                           </div>
-                        </td>
-                        <td className="py-3 text-card-foreground">
-                          {stat.barStationName ||
-                            (stat.barStationId
-                              ? `Station ${stat.barStationId}`
-                              : "N/A")}
-                        </td>
-                        <td className="py-3 text-card-foreground font-medium">
-                          {stat.salesCount}
-                        </td>
-                        <td className="py-3 text-card-foreground font-medium">
-                          €{stat.totalRevenue.toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          <div className="text-muted-foreground text-xs">{stat.userEmail}</div>
+                        </div>
+                      </td>
+                      <td className="text-card-foreground py-3">
+                        {stat.barStationName ||
+                          (stat.barStationId ? `Station ${stat.barStationId}` : "N/A")}
+                      </td>
+                      <td className="text-card-foreground py-3 font-medium">{stat.salesCount}</td>
+                      <td className="text-card-foreground py-3 font-medium">
+                        €{stat.totalRevenue.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
+          </div>
+        )}
 
         {me.role === "ADMIN" && orgDetails && (
           <div>
-            <h2 className="text-xl font-semibold text-card-foreground mb-4">
+            <h2 className="text-card-foreground mb-4 text-xl font-semibold">
               Organization Settings
             </h2>
             <form onSubmit={handleOrgUpdate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1 text-card-foreground">
-                  Name
-                </label>
+                <label className="text-card-foreground mb-1 block text-sm font-medium">Name</label>
                 <Input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full rounded-lg border border-gray-700 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   value={orgDetails.name}
-                  onChange={(e) =>
-                    setOrgDetails((d) =>
-                      d ? { ...d, name: e.target.value } : d
-                    )
-                  }
+                  onChange={e => setOrgDetails(d => (d ? { ...d, name: e.target.value } : d))}
                   required
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-card-foreground">
+                  <label className="text-card-foreground mb-1 block text-sm font-medium">
                     Price Increase Step (€)
                   </label>
                   <Input
                     type="number"
                     step="0.01"
                     min="0"
-                    className="w-full px-3 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full rounded-lg border border-gray-700 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                     value={orgDetails.priceIncreaseStep ?? ""}
-                    onChange={(e) =>
-                      setOrgDetails((d) =>
+                    onChange={e =>
+                      setOrgDetails(d =>
                         d
                           ? {
                               ...d,
                               priceIncreaseStep:
-                                e.target.value === ""
-                                  ? undefined
-                                  : parseFloat(e.target.value),
+                                e.target.value === "" ? undefined : parseFloat(e.target.value),
                             }
-                          : d
+                          : d,
                       )
                     }
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-card-foreground">
+                  <label className="text-card-foreground mb-1 block text-sm font-medium">
                     Price Decrease Step (€)
                   </label>
                   <Input
                     type="number"
                     step="0.01"
                     min="0"
-                    className="w-full px-3 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full rounded-lg border border-gray-700 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                     value={orgDetails.priceDecreaseStep ?? ""}
-                    onChange={(e) =>
-                      setOrgDetails((d) =>
+                    onChange={e =>
+                      setOrgDetails(d =>
                         d
                           ? {
                               ...d,
                               priceDecreaseStep:
-                                e.target.value === ""
-                                  ? undefined
-                                  : parseFloat(e.target.value),
+                                e.target.value === "" ? undefined : parseFloat(e.target.value),
                             }
-                          : d
+                          : d,
                       )
                     }
                   />
                 </div>
               </div>
-              {saveError && (
-                <p className="text-sm text-destructive">{saveError}</p>
-              )}
-              {saveSuccess && (
-                <p className="text-sm text-green-600">{saveSuccess}</p>
-              )}
+              {saveError && <p className="text-destructive text-sm">{saveError}</p>}
+              {saveSuccess && <p className="text-sm text-green-600">{saveSuccess}</p>}
               <button
                 type="submit"
                 className="inline-flex items-center rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
