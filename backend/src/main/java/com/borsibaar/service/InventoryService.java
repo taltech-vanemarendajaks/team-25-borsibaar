@@ -281,7 +281,7 @@ public InventoryResponseDto updatePrice(
     inventory.setUpdatedAt(OffsetDateTime.now());
     inventory = inventoryRepository.save(inventory);
     
-    // Loo transaction
+
     createTransaction(inventory, "ADJUSTMENT", BigDecimal.ZERO,
         inventory.getQuantity(), inventory.getQuantity(),
         oldPrice, newPrice, null, notes, userId);

@@ -359,40 +359,16 @@ export default function Inventory() {
         }
       );
 
-      const errorText = await response.text();
+      const text = await response.text();
       if (!response.ok) {
-        let errorMessage = "Failed to update price";
+        let message = "Failed to update price";
         try {
-          let data: { detail?: string; error?: string; message?: string } =
-            {};
-          if (errorText) {
-            try {
-              data = JSON.parse(errorText);
-            } catch {
-              if (!errorText.startsWith("{")) errorMessage = errorText;
-            }
-          }
-          const raw = data.detail ?? data.error ?? data.message ?? "";
-          if (typeof raw === "string" && raw.length > 0) {
-            errorMessage = raw;
-            if (errorMessage.startsWith("{")) {
-              try {
-                const inner = JSON.parse(errorMessage);
-                errorMessage =
-                  inner.detail ?? inner.error ?? inner.message ?? errorMessage;
-              } catch {
-                /* keep raw */
-              }
-            }
-            errorMessage = errorMessage.replace(
-              /(\d+\.\d{2})\d*/g,
-              (_, n) => parseFloat(n).toFixed(2)
-            );
-          }
+          const data = text ? JSON.parse(text) : {};
+          if (typeof data.error === "string") message = data.error;
         } catch {
-          if (errorText && !errorText.startsWith("{")) errorMessage = errorText;
+          /* use default message */
         }
-        setPriceError(errorMessage);
+        setPriceError(message);
         return;
       }
 

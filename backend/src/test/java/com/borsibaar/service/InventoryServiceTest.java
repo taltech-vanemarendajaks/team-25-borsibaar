@@ -185,16 +185,6 @@ class InventoryServiceTest {
      */
     @Test
     void updatePrice_Success_UpdatesPriceAndCreatesTransaction() {
-        System.out.println("""
-            -------- InventoryServiceTest: updatePrice_Success --------
-            Testitav: Hinna käsitsi muutmine (Update Price) – uus hind min/max piirides.
-            Mock andmed:
-              Product: id=5, orgId=1, name=Cola, basePrice=2.00, minPrice=1.00, maxPrice=5.00
-              Inventory: id=10, productId=5, quantity=10, adjustedPrice=2.00 (praegune hind)
-              Sisend: newPrice=3.50, notes=Manual, userId=..., orgId=1
-            Kontrollitakse: DTO.unitPrice=3.50; inventuur save; ADJUSTMENT tx priceBefore=2.00, priceAfter=3.50
-            ----------------------------------------------------------""");
-
         // --- Mock andmed: toode ---
         Long orgId = 1L;
         Long productId = 5L;
@@ -242,8 +232,6 @@ class InventoryServiceTest {
         assertEquals("ADJUSTMENT", txCap.getValue().getTransactionType());
         assertEquals(new BigDecimal("2.00"), txCap.getValue().getPriceBefore());
         assertEquals(newPrice, txCap.getValue().getPriceAfter());
-
-        System.out.println("updatePrice_Success: KÕIK KONTROLLID LÄBITUD.");
     }
 
     /**
@@ -252,13 +240,6 @@ class InventoryServiceTest {
      */
     @Test
     void updatePrice_BelowMin_ThrowsBadRequest() {
-        System.out.println("""
-            -------- InventoryServiceTest: updatePrice_BelowMin_ThrowsBadRequest --------
-            Testitav: Uus hind alla minPrice -> BAD_REQUEST.
-            Mock: Product minPrice=2.00, Inventory adjustedPrice=2.00. Sisend: newPrice=1.00.
-            Kontrollitakse: ResponseStatusException BAD_REQUEST, sõnum "below minimum price"
-            ------------------------------------------------------------------------------""");
-
         Long orgId = 1L;
         Long productId = 5L;
         Product product = new Product();
@@ -289,7 +270,6 @@ class InventoryServiceTest {
 
         verify(inventoryRepository, never()).save(any(Inventory.class));
         verify(inventoryTransactionRepository, never()).save(any(InventoryTransaction.class));
-        System.out.println("updatePrice_BelowMin_ThrowsBadRequest: KÕIK KONTROLLID LÄBITUD.");
     }
 
     /**
@@ -298,13 +278,6 @@ class InventoryServiceTest {
      */
     @Test
     void updatePrice_AboveMax_ThrowsBadRequest() {
-        System.out.println("""
-            -------- InventoryServiceTest: updatePrice_AboveMax_ThrowsBadRequest --------
-            Testitav: Uus hind üle maxPrice -> BAD_REQUEST.
-            Mock: Product maxPrice=3.00, Inventory adjustedPrice=2.00. Sisend: newPrice=5.00.
-            Kontrollitakse: ResponseStatusException BAD_REQUEST, sõnum "above maximum price"
-            ------------------------------------------------------------------------------""");
-
         Long orgId = 1L;
         Long productId = 5L;
         Product product = new Product();
@@ -335,7 +308,6 @@ class InventoryServiceTest {
 
         verify(inventoryRepository, never()).save(any(Inventory.class));
         verify(inventoryTransactionRepository, never()).save(any(InventoryTransaction.class));
-        System.out.println("updatePrice_AboveMax_ThrowsBadRequest: KÕIK KONTROLLID LÄBITUD.");
     }
 
     @Test
