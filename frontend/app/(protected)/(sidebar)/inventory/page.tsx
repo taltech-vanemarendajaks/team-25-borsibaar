@@ -48,6 +48,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { sortInventoryBy } from "@/lib/sortInventory";
 
 export const dynamic = "force-dynamic";
 
@@ -409,19 +410,11 @@ export default function Inventory() {
   ) : inventory;
 
   const sortedInventory = useMemo(() => {
-    const list = [...filteredInventory];
-    list.sort((a, b) => {
-      let cmp = 0;
-      if (sortBy === "name") {
-        cmp = (a.productName ?? "").localeCompare(b.productName ?? "", undefined, { sensitivity: "base" });
-      } else if (sortBy === "stock") {
-        cmp = parseFloat(a.quantity) - parseFloat(b.quantity);
-      } else {
-        cmp = parseFloat(a.basePrice) - parseFloat(b.basePrice);
-      }
-      return sortDir === "asc" ? cmp : -cmp;
-    });
-    return list;
+    const result = sortInventoryBy(filteredInventory, sortBy, sortDir);
+    if (process.env.NODE_ENV === "development") {
+      console.log("[inventory] sorted via map-then-sort, items:", result.length);
+    }
+    return result;
   }, [filteredInventory, sortBy, sortDir]);
 
   const handleSort = (field: "name" | "stock" | "price") => {
