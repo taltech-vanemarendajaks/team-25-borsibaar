@@ -38,6 +38,10 @@ public class ProductService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST, "Category not found: " + request.categoryId()));
 
+        if (request.minPrice().compareTo(request.maxPrice()) > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max price must be greater than min price");
+        }
+
         Product entity = productMapper.toEntity(request);
         entity.setOrganizationId(orgId);
         entity.setActive(true);

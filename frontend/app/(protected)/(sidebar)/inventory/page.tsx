@@ -45,6 +45,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -632,7 +633,12 @@ export default function Inventory() {
                     currentPrice: e.target.value,
                   })
                 }
-                className="w-full rounded-lg border border-gray-700 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                className={cn(
+                                  "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                                  Number(productForm.currentPrice) < 0
+                                    ? "border-red-600 text-[#FF6169]"
+                                    : "border-gray-700"
+                                )}
                 placeholder="0.00"
                 required
               />
@@ -650,7 +656,12 @@ export default function Inventory() {
                     minPrice: e.target.value,
                   })
                 }
-                className="w-full rounded-lg border border-gray-700 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                className={cn(
+                                  "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                                  Number(productForm.minPrice) < 0
+                                    ? "border-red-600 text-[#FF6169]"
+                                    : "border-gray-700"
+                                )}
                 placeholder="0.00"
                 required
               />
@@ -668,7 +679,12 @@ export default function Inventory() {
                     maxPrice: e.target.value,
                   })
                 }
-                className="w-full rounded-lg border border-gray-700 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                className={cn(
+                                  "w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent",
+                                  Number(productForm.maxPrice) < 0 || Number(productForm.maxPrice) < Number(productForm.minPrice)
+                                    ? "border-red-600 text-[#FF6169]"
+                                    : "border-gray-700"
+                                )}
                 placeholder="0.00"
                 required
               />
@@ -725,7 +741,11 @@ export default function Inventory() {
                 !productForm.categoryId ||
                 !productForm.currentPrice ||
                 !productForm.minPrice ||
-                !productForm.maxPrice
+                !productForm.maxPrice ||
+                Number(productForm.currentPrice) < 0 ||
+                Number(productForm.minPrice) < 0 ||
+                Number(productForm.maxPrice) < 0 ||
+                Number(productForm.maxPrice) < Number(productForm.minPrice)
               }
               className="w-full rounded-lg bg-blue-600 py-2 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-700"
             >
