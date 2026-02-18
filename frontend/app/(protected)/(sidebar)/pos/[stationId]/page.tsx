@@ -124,18 +124,14 @@ export default function POSStation() {
   }, [cart, stationId]);
 
   const addToCart = (product: Product) => {
-    const existingItem = cart.find(
-      (item) => item.productId === product.productId
-    );
+    const existingItem = cart.find(item => item.productId === product.productId);
 
     if (existingItem) {
       if (existingItem.quantity < product.quantity) {
         setCart(
-          cart.map((item) =>
-            item.productId === product.productId
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          )
+          cart.map(item =>
+            item.productId === product.productId ? { ...item, quantity: item.quantity + 1 } : item,
+          ),
         );
       }
     } else {
@@ -157,7 +153,7 @@ export default function POSStation() {
   const updateCartQuantity = (productId: number, change: number) => {
     setCart(
       cart
-        .map((item) => {
+        .map(item => {
           if (item.productId === productId) {
             const newQuantity = item.quantity + change;
             if (newQuantity <= 0) {
@@ -169,12 +165,12 @@ export default function POSStation() {
           }
           return item;
         })
-        .filter(Boolean) as CartItem[]
+        .filter(Boolean) as CartItem[],
     );
   };
 
   const removeFromCart = (productId: number) => {
-    setCart(cart.filter((item) => item.productId !== productId));
+    setCart(cart.filter(item => item.productId !== productId));
   };
 
   const clearCart = () => {
@@ -187,7 +183,7 @@ export default function POSStation() {
     setIsProcessingSale(true);
     try {
       const saleRequest = {
-        items: cart.map((item) => ({
+        items: cart.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
         })),
@@ -211,28 +207,24 @@ export default function POSStation() {
       clearCart();
       fetchProducts();
     } catch (err) {
-      alert(
-        `Error processing sale: ${
-          err instanceof Error ? err.message : "Unknown error"
-        }`
-      );
+      alert(`Error processing sale: ${err instanceof Error ? err.message : "Unknown error"}`);
     } finally {
       setIsProcessingSale(false);
     }
   };
 
-  const filteredProducts = products.filter((product) =>
-    product.productName.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = products.filter(product =>
+    product.productName.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   if (error) {
     return (
-      <div className="min-h-screen w-full bg-background p-6 flex items-center justify-center">
+      <div className="bg-background flex min-h-screen w-full items-center justify-center p-6">
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <p className="text-xl text-gray-100 mb-4">{error}</p>
+          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-400" />
+          <p className="mb-4 text-xl text-gray-100">{error}</p>
           <Button onClick={() => router.push("/pos")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Stations
           </Button>
         </div>
@@ -242,9 +234,9 @@ export default function POSStation() {
 
   if (loading && !products?.length) {
     return (
-      <div className="min-h-screen w-full bg-background p-6 flex items-center justify-center">
+      <div className="bg-background flex min-h-screen w-full items-center justify-center p-6">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
           <p className="text-gray-600">Loading products...</p>
         </div>
       </div>
@@ -252,8 +244,8 @@ export default function POSStation() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6 pb-24 lg:pb-6 w-full">
-      <div className="max-w-full mx-auto">
+    <div className="bg-background min-h-screen w-full p-6 pb-24 lg:pb-6">
+      <div className="mx-auto max-w-full">
         <POSHeader
           station={station}
           currentUser={currentUser}
@@ -266,20 +258,18 @@ export default function POSStation() {
         />
 
         {/* Main Content */}
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col gap-6 lg:flex-row">
           {/* Products Grid */}
-          <div className="flex-1 order-2 lg:order-1">
+          <div className="order-2 flex-1 lg:order-1">
             <div
-              className={clsx("grid grid-cols-1 sm:grid-cols-2 gap-4", {
+              className={clsx("grid grid-cols-1 gap-4 sm:grid-cols-2", {
                 "transition-all duration-300": true,
                 "pointer-events-none blur-xs": loading,
                 "blur-none": !loading,
               })}
             >
-              {filteredProducts.map((product) => {
-                const cartItem = cart.find(
-                  (item) => item.productId === product.productId
-                );
+              {filteredProducts.map(product => {
+                const cartItem = cart.find(item => item.productId === product.productId);
 
                 return (
                   <ProductCard

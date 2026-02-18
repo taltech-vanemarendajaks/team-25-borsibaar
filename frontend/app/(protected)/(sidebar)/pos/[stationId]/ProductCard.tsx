@@ -10,16 +10,10 @@ interface ProductCardProps {
   onAddToCart: (product: Product) => void;
 }
 
-export function ProductCard({
-  product,
-  cartItem,
-  onAddToCart,
-}: ProductCardProps) {
+export function ProductCard({ product, cartItem, onAddToCart }: ProductCardProps) {
   const getStockStatus = (quantity: number) => {
-    if (quantity === 0)
-      return { color: "bg-red-100 text-red-800", label: "Out of Stock" };
-    if (quantity < 10)
-      return { color: "bg-yellow-100 text-yellow-800", label: "Low Stock" };
+    if (quantity === 0) return { color: "bg-red-100 text-red-800", label: "Out of Stock" };
+    if (quantity < 10) return { color: "bg-yellow-100 text-yellow-800", label: "Low Stock" };
     return { color: "bg-green-100 text-green-800", label: "In Stock" };
   };
 
@@ -27,20 +21,18 @@ export function ProductCard({
 
   return (
     <div
-      className="bg-card p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer border-1 border-[color-mix(in oklab, var(--ring) 50%, transparent)]"
+      className="bg-card border-[color-mix(in oklab, var(--ring) 50%, transparent)] cursor-pointer rounded-lg border-1 p-4 shadow-sm transition-shadow hover:shadow-md"
       onClick={() => onAddToCart(product)}
     >
-      <div className="flex items-start justify-between mb-2">
-        <h3 className="font-semibold text-gray-100 truncate flex-1">
-          {product.productName}
-        </h3>
-        <Package className="w-4 h-4 text-gray-400 flex-shrink-0 ml-2" />
+      <div className="mb-2 flex items-start justify-between">
+        <h3 className="flex-1 truncate font-semibold text-gray-100">{product.productName}</h3>
+        <Package className="ml-2 h-4 w-4 flex-shrink-0 text-gray-400" />
       </div>
 
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-3 flex items-center justify-between">
         <div className="flex flex-col">
           <span
-            className={clsx("text-lg font-bold ", {
+            className={clsx("text-lg font-bold", {
               "text-red-400": product.unitPrice > product.basePrice,
               "text-white": product.unitPrice == product.basePrice,
               "text-green-400": product.unitPrice < product.basePrice,
@@ -48,12 +40,10 @@ export function ProductCard({
           >
             ${product.unitPrice.toFixed(2)}
           </span>
-          <span className="text-xs text-white opacity-50">
-            ${product.basePrice?.toFixed(2)}
-          </span>
+          <span className="text-xs text-white opacity-50">${product.basePrice?.toFixed(2)}</span>
         </div>
         <span
-          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${status.color}`}
+          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${status.color}`}
         >
           {status.label}
         </span>
@@ -61,9 +51,7 @@ export function ProductCard({
 
       <div className="flex items-center justify-between text-sm text-gray-400">
         <span>Stock: {product.quantity}</span>
-        {cartItem && (
-          <span className="text-blue-400">In cart: {cartItem.quantity}</span>
-        )}
+        {cartItem && <span className="text-blue-400">In cart: {cartItem.quantity}</span>}
       </div>
     </div>
   );

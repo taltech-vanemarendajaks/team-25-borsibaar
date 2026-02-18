@@ -12,11 +12,7 @@ interface StationManagementHeaderProps {
   onCreateDialogOpenChange: (open: boolean) => void;
   allUsers: User[];
   userFetchError: string | null;
-  onCreate: (data: {
-    name: string;
-    description: string;
-    userIds: string[];
-  }) => Promise<void>;
+  onCreate: (data: { name: string; description: string; userIds: string[] }) => Promise<void>;
 }
 
 export function StationManagementHeader({
@@ -28,15 +24,15 @@ export function StationManagementHeader({
   onCreate,
 }: StationManagementHeaderProps) {
   return (
-    <div className="rounded-lg bg-card p-4 sm:p-6 shadow-sm mb-4 border-1 border-[color-mix(in oklab, var(--ring) 50%, transparent)]">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" />
+    <div className="bg-card border-[color-mix(in oklab, var(--ring) 50%, transparent)] mb-4 rounded-lg border-1 p-4 shadow-sm sm:p-6">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <ShoppingCart className="h-6 w-6 flex-shrink-0 text-blue-600 sm:h-8 sm:w-8" />
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-100 truncate">
+            <h1 className="truncate text-2xl font-bold text-gray-100 sm:text-3xl">
               {isAdmin ? "POS Station Management" : "Select POS Station"}
             </h1>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="mt-1 text-sm text-gray-400">
               {isAdmin
                 ? "Manage your bar stations and assign users"
                 : "Choose a station to start selling"}
@@ -45,7 +41,7 @@ export function StationManagementHeader({
         </div>
 
         {isAdmin && (
-          <div className="w-full sm:w-auto flex-shrink-0">
+          <div className="w-full flex-shrink-0 sm:w-auto">
             <StationDialog
               mode="create"
               users={allUsers}
@@ -54,8 +50,8 @@ export function StationManagementHeader({
               onOpenChange={onCreateDialogOpenChange}
               onSubmit={onCreate}
               trigger={
-                <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-white">
-                  <Plus className="w-4 h-4" />
+                <Button className="w-full bg-blue-600 text-white hover:bg-blue-700 sm:w-auto">
+                  <Plus className="h-4 w-4" />
                   Create Station
                 </Button>
               }
@@ -66,4 +62,3 @@ export function StationManagementHeader({
     </div>
   );
 }
-

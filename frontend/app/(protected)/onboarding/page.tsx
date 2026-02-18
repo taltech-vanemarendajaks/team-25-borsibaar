@@ -10,9 +10,7 @@ type Org = { id: number; name: string; createdAt?: string; updatedAt?: string };
 export default function OnboardingPage() {
   const router = useRouter();
 
-  const [orgs, setOrgs] = useState<Org[]>([
-    { id: 1, name: "Default Organization" },
-  ]); // fallback
+  const [orgs, setOrgs] = useState<Org[]>([{ id: 1, name: "Default Organization" }]); // fallback
   const [organizationId, setOrganizationId] = useState<number | "">("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -31,7 +29,7 @@ export default function OnboardingPage() {
         return null;
       }
     },
-    { refreshInterval: 0, revalidateOnFocus: false }
+    { refreshInterval: 0, revalidateOnFocus: false },
   );
 
   useEffect(() => {
@@ -65,8 +63,7 @@ export default function OnboardingPage() {
     try {
       setSaving(true);
       setError(null);
-      if (organizationId === "")
-        throw new Error("Please choose an organization");
+      if (organizationId === "") throw new Error("Please choose an organization");
 
       const resp = await fetch("/api/backend/account/onboarding", {
         method: "POST",
@@ -89,26 +86,22 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-6">
-      <div className="w-full max-w-lg rounded-2xl bg-card text-card-foreground p-6 shadow [color-scheme:light]">
+    <div className="bg-background flex min-h-screen items-center justify-center p-6">
+      <div className="bg-card text-card-foreground w-full max-w-lg rounded-2xl p-6 [color-scheme:light] shadow">
         <h1 className="text-xl font-semibold">Finish onboarding</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Choose your organization to continue.
-        </p>
+        <p className="text-muted-foreground mt-1 text-sm">Choose your organization to continue.</p>
 
         <div className="mt-5 space-y-4">
           <div>
             <label className="text-sm font-medium">Organization</label>
             <select
-              className="mt-1 w-full rounded-lg border border-input bg-background text-foreground px-3 py-2"
+              className="border-input bg-background text-foreground mt-1 w-full rounded-lg border px-3 py-2"
               value={organizationId}
-              onChange={(e) =>
-                setOrganizationId(e.target.value ? Number(e.target.value) : "")
-              }
+              onChange={e => setOrganizationId(e.target.value ? Number(e.target.value) : "")}
               disabled={loadingOrgs || saving}
             >
               <option value="">{loadingOrgs ? "Loading…" : "Select…"}</option>
-              {orgs.map((o) => (
+              {orgs.map(o => (
                 <option key={o.id} value={o.id}>
                   {o.name}
                 </option>
@@ -120,24 +113,24 @@ export default function OnboardingPage() {
             <input
               type="checkbox"
               checked={acceptTerms}
-              onChange={(e) => setAcceptTerms(e.target.checked)}
+              onChange={e => setAcceptTerms(e.target.checked)}
               disabled={saving}
             />
             I accept the Terms &amp; Privacy Policy.
           </label>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-destructive text-sm">{error}</p>}
         </div>
 
         <div className="mt-6 flex justify-end gap-2">
           <a
-            className="rounded-lg border border-input px-4 py-2 text-foreground"
+            className="border-input text-foreground rounded-lg border px-4 py-2"
             href={`${backendUrl}/logout`}
           >
             Cancel
           </a>
           <button
-            className="rounded-lg bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
+            className="bg-primary text-primary-foreground rounded-lg px-4 py-2 disabled:opacity-50"
             disabled={saving || !acceptTerms || organizationId === ""}
             onClick={submit}
           >

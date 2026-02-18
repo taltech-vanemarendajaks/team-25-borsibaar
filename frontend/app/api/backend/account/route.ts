@@ -20,9 +20,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error("Proxy error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch account" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch account" }, { status: 500 });
   }
 }

@@ -1,0 +1,17 @@
+name: Self-Hosted Docker Hello World
+
+on:
+  workflow_dispatch:  # Allows you to manually trigger this from the Actions tab
+
+jobs:
+  docker-test:
+    name: Run Docker Hello World
+    runs-on: self-hosted  # Target a specific runner
+    
+    steps:
+      - name: Check for Docker Installation
+        run: docker --version
+
+      - name: Spin up Hello World Container
+        run: docker run hello-world
+

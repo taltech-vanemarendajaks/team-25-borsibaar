@@ -37,9 +37,7 @@ export default function POSManagement() {
   const fetchStations = useCallback(
     async (isAdmin: boolean) => {
       try {
-        const url = isAdmin
-          ? "/api/backend/bar-stations"
-          : "/api/backend/bar-stations/user";
+        const url = isAdmin ? "/api/backend/bar-stations" : "/api/backend/bar-stations/user";
 
         const response = await fetch(url, { cache: "no-store" });
 
@@ -63,7 +61,7 @@ export default function POSManagement() {
         setLoading(false);
       }
     },
-    [router]
+    [router],
   );
 
   const fetchAllUsers = useCallback(async () => {
@@ -78,8 +76,7 @@ export default function POSManagement() {
       setAllUsers(data);
       setUserFetchError(null);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to fetch users";
+      const message = err instanceof Error ? err.message : "Failed to fetch users";
       console.error("Error fetching users:", err);
       setAllUsers([]);
       setUserFetchError(message);
@@ -134,7 +131,7 @@ export default function POSManagement() {
       name: string;
       description: string;
       userIds: string[];
-    }
+    },
   ) => {
     const payload = {
       name: data.name,
@@ -173,11 +170,7 @@ export default function POSManagement() {
 
       await fetchStations(true);
     } catch (err) {
-      alert(
-        `Error deleting station: ${
-          err instanceof Error ? err.message : "Unknown error"
-        }`
-      );
+      alert(`Error deleting station: ${err instanceof Error ? err.message : "Unknown error"}`);
     }
   };
 
@@ -191,9 +184,9 @@ export default function POSManagement() {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-background p-6 flex items-center justify-center">
+      <div className="bg-background flex min-h-screen w-full items-center justify-center p-6">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
           <p className="text-gray-600">Loading stations...</p>
         </div>
       </div>
@@ -202,10 +195,10 @@ export default function POSManagement() {
 
   if (error) {
     return (
-      <div className="min-h-screen w-full bg-background p-6 flex items-center justify-center">
+      <div className="bg-background flex min-h-screen w-full items-center justify-center p-6">
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <p className="text-xl text-gray-100 mb-2">{error}</p>
+          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-400" />
+          <p className="mb-2 text-xl text-gray-100">{error}</p>
         </div>
       </div>
     );
@@ -216,12 +209,10 @@ export default function POSManagement() {
   // Non-admin with no stations
   if (!isAdmin && stations.length === 0) {
     return (
-      <div className="min-h-screen w-full bg-background p-6 flex items-center justify-center">
+      <div className="bg-background flex min-h-screen w-full items-center justify-center p-6">
         <div className="text-center">
-          <Store className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-xl text-gray-100 mb-2">
-            You have not been assigned to any station
-          </p>
+          <Store className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+          <p className="mb-2 text-xl text-gray-100">You have not been assigned to any station</p>
           <p className="text-sm text-gray-400">
             Please contact your administrator to get access to a POS station.
           </p>
@@ -231,43 +222,41 @@ export default function POSManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 w-full">
-        <StationManagementHeader
-          isAdmin={isAdmin}
-          isCreateDialogOpen={isCreateDialogOpen}
-          onCreateDialogOpenChange={setIsCreateDialogOpen}
-          allUsers={allUsers}
-          userFetchError={userFetchError}
-          onCreate={handleCreateStation}
-        />
+    <div className="bg-background min-h-screen w-full p-4">
+      <StationManagementHeader
+        isAdmin={isAdmin}
+        isCreateDialogOpen={isCreateDialogOpen}
+        onCreateDialogOpenChange={setIsCreateDialogOpen}
+        allUsers={allUsers}
+        userFetchError={userFetchError}
+        onCreate={handleCreateStation}
+      />
 
-        {/* Stations Grid - Single column on tablets, multi-column on larger screens */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-          {stations.map((station) => (
-            <StationCard
-              key={station.id}
-              station={station}
-              isAdmin={isAdmin}
-              allUsers={allUsers}
-              userFetchError={userFetchError}
-              editingStationId={editingStationId}
-              onEditClick={handleEditClick}
-              onEditClose={handleEditClose}
-              onUpdate={(data) => handleUpdateStation(station.id, data)}
-              onDelete={handleDeleteStation}
-            />
-          ))}
+      {/* Stations Grid - Single column on tablets, multi-column on larger screens */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 xl:grid-cols-3">
+        {stations.map(station => (
+          <StationCard
+            key={station.id}
+            station={station}
+            isAdmin={isAdmin}
+            allUsers={allUsers}
+            userFetchError={userFetchError}
+            editingStationId={editingStationId}
+            onEditClick={handleEditClick}
+            onEditClose={handleEditClose}
+            onUpdate={data => handleUpdateStation(station.id, data)}
+            onDelete={handleDeleteStation}
+          />
+        ))}
+      </div>
+
+      {stations.length === 0 && isAdmin && (
+        <div className="py-12 text-center">
+          <Store className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+          <p className="mb-2 text-xl text-gray-100">No stations yet</p>
+          <p className="mb-4 text-sm text-gray-400">Create your first POS station to get started</p>
         </div>
-
-        {stations.length === 0 && isAdmin && (
-          <div className="text-center py-12">
-            <Store className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-xl text-gray-100 mb-2">No stations yet</p>
-            <p className="text-sm text-gray-400 mb-4">
-              Create your first POS station to get started
-            </p>
-          </div>
-        )}
+      )}
     </div>
   );
 }

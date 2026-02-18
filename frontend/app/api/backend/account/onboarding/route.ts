@@ -1,17 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { backendUrl } from '@/utils/constants';
+import { NextRequest, NextResponse } from "next/server";
+import { backendUrl } from "@/utils/constants";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     const response = await fetch(`${backendUrl}/api/account/onboarding`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Cookie': request.headers.get('cookie') || '',
+        "Content-Type": "application/json",
+        Cookie: request.headers.get("cookie") || "",
       },
-      credentials: 'include',
+      credentials: "include",
       body: JSON.stringify(body),
     });
 
@@ -21,19 +21,16 @@ export async function POST(request: NextRequest) {
     }
 
     const text = await response.text();
-    
-    return new NextResponse(text, { 
+
+    return new NextResponse(text, {
       status: response.status,
       headers: {
-        'Content-Type': response.headers.get('content-type') || 'application/json',
-        'Set-Cookie': response.headers.get('set-cookie') || '',
-      }
+        "Content-Type": response.headers.get("content-type") || "application/json",
+        "Set-Cookie": response.headers.get("set-cookie") || "",
+      },
     });
   } catch (error) {
-    console.error('Proxy error:', error);
-    return NextResponse.json(
-      { error: 'Failed to complete onboarding' }, 
-      { status: 500 }
-    );
+    console.error("Proxy error:", error);
+    return NextResponse.json({ error: "Failed to complete onboarding" }, { status: 500 });
   }
 }

@@ -45,14 +45,12 @@ function SidebarContentItems() {
 
   return (
     <>
-      {items.map((item) => (
+      {items.map(item => (
         <SidebarMenuItem key={item.title}>
           <SidebarMenuButton asChild size="lg" tooltip={item.title}>
             <a href={item.url} className="flex items-center">
-              <item.icon className="!w-6 !h-6" />
-              {!isCollapsed && (
-                <span className="text-lg font-medium">{item.title}</span>
-              )}
+              <item.icon className="!h-6 !w-6" />
+              {!isCollapsed && <span className="text-lg font-medium">{item.title}</span>}
             </a>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -78,7 +76,7 @@ function SidebarFooterContent() {
     <SidebarMenu>
       <SidebarMenuItem>
         <SidebarMenuButton size="lg" onClick={handleLogout} tooltip="Logout">
-          <LogOut className="!w-6 !h-6" />
+          <LogOut className="!h-6 !w-6" />
           {!isCollapsed && <span className="text-lg font-medium">Logout</span>}
         </SidebarMenuButton>
       </SidebarMenuItem>
